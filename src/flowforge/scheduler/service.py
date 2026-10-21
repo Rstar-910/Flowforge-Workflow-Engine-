@@ -4,6 +4,7 @@ Each cycle (all state lives in PostgreSQL; the scheduler keeps none):
 
 1. RETRY_WAIT tasks whose ``next_attempt_at`` passed -> READY.
 2. RUNNING tasks whose lease expired -> RETRY_WAIT / READY / FAILED / CANCELLED.
+   Then workflow deadlines and task queue timeouts (engine/timeouts.py).
 3. Every ``reconcile_every`` cycles: repair runs whose progression is out of
    date (safety net; normally a no-op).
 4. Every ``retention_interval_seconds``: apply retention (engine/retention.py).
@@ -30,6 +31,7 @@ from flowforge.engine.recovery import (
     sample_gauges,
 )
 from flowforge.engine.retention import RetentionStats, apply_retention
+from flowforge.engine.timeouts import enforce_run_deadlines, fail_queue_timeouts
 from flowforge.observability import metrics
 from flowforge.observability.logging import log_event
 from flowforge.worker.runtime import DB_ERRORS
@@ -42,6 +44,8 @@ class CycleStats:
     retries_promoted: int = 0
     leases_recovered: int = 0
     runs_reconciled: int = 0
+    deadlines_exceeded: int = 0
+    queue_timeouts: int = 0
     retention: RetentionStats | None = None
 
 
@@ -59,6 +63,8 @@ class Scheduler:
         batch = self.settings.scheduler_batch_size
         stats.retries_promoted = await promote_due_retries(self.engine, limit=batch)
         stats.leases_recovered = len(await recover_expired_leases(self.engine, limit=batch))
+        stats.deadlines_exceeded = await enforce_run_deadlines(self.engine, limit=batch)
+        stats.queue_timeouts = await fail_queue_timeouts(self.engine, limit=batch)
         if reconcile if reconcile is not None else self.cycles % self.reconcile_every == 0:
             stats.runs_reconciled = await reconcile_runs(self.engine, limit=batch)
         now = time.monotonic()
@@ -68,7 +74,13 @@ class Scheduler:
         await sample_gauges(self.engine, lease_seconds=self.settings.lease_seconds)
         self.cycles += 1
         metrics.SCHEDULER_CYCLE.observe(time.perf_counter() - start)
-        if stats.retries_promoted or stats.leases_recovered or stats.runs_reconciled:
+        if (
+            stats.retries_promoted
+            or stats.leases_recovered
+            or stats.runs_reconciled
+            or stats.deadlines_exceeded
+            or stats.queue_timeouts
+        ):
             log_event(
                 logger,
                 logging.INFO,
@@ -77,6 +89,8 @@ class Scheduler:
                 retries_promoted=stats.retries_promoted,
                 leases_recovered=stats.leases_recovered,
                 runs_reconciled=stats.runs_reconciled,
+                deadlines_exceeded=stats.deadlines_exceeded,
+                queue_timeouts=stats.queue_timeouts,
                 duration_ms=int((time.perf_counter() - start) * 1000),
             )
         return stats

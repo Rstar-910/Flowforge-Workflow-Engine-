@@ -147,3 +147,16 @@ def test_adding_a_back_edge_creates_a_detected_cycle(graph, data):
         assert b in cyclic[a]  # every hop is a real dependency edge
     with pytest.raises(DefinitionValidationError):
         validate_definition(spec([t(k, d) for k, d in cyclic.items()]), HANDLERS)
+
+
+def test_deadline_and_queue_timeout_fields():
+    s = spec([t("a", queue_timeout_seconds=30)], deadline_seconds=600)
+    assert s.deadline_seconds == 600 and s.tasks[0].queue_timeout_seconds == 30
+    defaults = spec([t("a")])
+    assert defaults.deadline_seconds is None and defaults.tasks[0].queue_timeout_seconds is None
+    for bad in ({"deadline_seconds": 0}, {"deadline_seconds": 31 * 24 * 3600}):
+        with pytest.raises(ValidationError):
+            spec([t("a")], **bad)
+    for bad_q in (0, -1, 8 * 24 * 3600):
+        with pytest.raises(ValidationError):
+            spec([t("a", queue_timeout_seconds=bad_q)])

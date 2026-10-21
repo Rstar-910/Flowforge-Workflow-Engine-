@@ -37,6 +37,12 @@ listed as a limitation.
 - **Retries**: max attempts, exponential backoff, a delay cap, jitter, `Retry-After`
   hints, retryable vs. permanent errors, timeouts, a dead-letter (FAILED) state, and
   admin-only manual retry.
+- **Deadlines and queue timeouts**:
+  - An optional workflow deadline (`deadline_seconds`) stops an overdue run and fails
+    it.
+  - An optional per-task queue timeout (`queue_timeout_seconds`) fails a task that no
+    worker picks up in time.
+  - See [`examples/deadline-workflow.json`](examples/deadline-workflow.json).
 - **Failure propagation**: dependents of a failed task become `UPSTREAM_FAILED`.
   Independent branches still finish.
 - **Cancellation**: queued work is cancelled atomically. Running handlers get
@@ -315,7 +321,7 @@ These are explained in detail in [docs/failure-model.md](docs/failure-model.md).
   single runs.
 - Thread handlers cannot be interrupted. A timed-out thread keeps a worker slot until
   it returns.
-- Not implemented: queue timeouts, workflow deadlines, compensation/sagas, scheduled or
+- Not implemented: compensation/sagas, scheduled or
   recurring workflows, partitioning of the event table, a global rate limiter.
 - Tested on one host, with PostgreSQL in Docker. No multi-host partitions and no
   PostgreSQL failover.
@@ -327,7 +333,6 @@ These are deliberately deferred until measurements justify them:
 - LISTEN/NOTIFY to reduce polling latency.
 - Batch completions.
 - Event table partitioning, if retention deletes ever become a measured cost.
-- Workflow deadlines.
 - Compensation steps.
 - Per-tenant fairness and quotas.
 - A typed client SDK.

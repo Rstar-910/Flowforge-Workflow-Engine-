@@ -100,6 +100,11 @@ DB_QUERY_DURATION = Histogram(
 DB_ERRORS = Counter(
     "flowforge_database_errors_total", "Database errors by component.", ["component"]
 )
+DEADLINES_EXCEEDED = Counter(
+    "flowforge_deadlines_exceeded_total",
+    "Workflow deadlines (kind=run) and task queue timeouts (kind=queue) that fired.",
+    ["kind"],
+)
 RETENTION_DELETED = Counter(
     "flowforge_retention_deleted_total",
     "Rows removed by retention, by kind (runs, events, workers).",

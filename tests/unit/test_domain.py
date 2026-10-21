@@ -151,6 +151,7 @@ def test_run_transitions():
     check_run_transition(RunStatus.FAILED, RunStatus.RUNNING)  # manual retry
     for terminal in (RunStatus.SUCCEEDED, RunStatus.CANCELLED):
         assert RUN_TRANSITIONS[terminal] == frozenset()
+    check_run_transition(RunStatus.CANCELLING, RunStatus.FAILED)  # workflow deadline
     with pytest.raises(InvalidTransitionError):
         check_run_transition(RunStatus.CANCELLING, RunStatus.RUNNING)
     assert {RunStatus.SUCCEEDED, RunStatus.FAILED, RunStatus.CANCELLED} == TERMINAL_RUN_STATUSES

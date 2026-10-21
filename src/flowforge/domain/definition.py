@@ -27,6 +27,8 @@ MAX_TASKS = 500
 MAX_DEPENDENCIES = 100
 MAX_TIMEOUT_SECONDS = 24 * 3600
 MAX_STATIC_INPUT_BYTES = 64 * 1024
+MAX_DEADLINE_SECONDS = 30 * 24 * 3600
+MAX_QUEUE_TIMEOUT_SECONDS = 7 * 24 * 3600
 
 
 class TaskSpec(BaseModel):
@@ -37,6 +39,9 @@ class TaskSpec(BaseModel):
     depends_on: tuple[str, ...] = Field(default=(), max_length=MAX_DEPENDENCIES)
     input: dict[str, Any] = Field(default_factory=dict)
     timeout_seconds: float = Field(default=60.0, gt=0, le=MAX_TIMEOUT_SECONDS)
+    # Maximum time this task may wait in READY (no worker claimed it) before it fails
+    # with QueueTimeout. Restarts whenever the task becomes READY again.
+    queue_timeout_seconds: float | None = Field(default=None, gt=0, le=MAX_QUEUE_TIMEOUT_SECONDS)
     retry: RetryPolicy = Field(default_factory=RetryPolicy)
 
     @field_validator("input")
@@ -53,6 +58,9 @@ class WorkflowDefinitionSpec(BaseModel):
     name: str = Field(pattern=SLUG_PATTERN)
     version: int = Field(ge=1, le=1_000_000)
     description: str | None = Field(default=None, max_length=2000)
+    # Maximum total run time from submission. When exceeded, the run is stopped like
+    # a cancellation and ends FAILED ("deadline exceeded").
+    deadline_seconds: float | None = Field(default=None, gt=0, le=MAX_DEADLINE_SECONDS)
     tasks: tuple[TaskSpec, ...] = Field(min_length=1, max_length=MAX_TASKS)
 
 

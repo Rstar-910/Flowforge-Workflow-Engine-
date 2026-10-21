@@ -89,6 +89,11 @@ class WorkflowRun(Base):
             "status",
             postgresql_where=text("status IN ('PENDING', 'RUNNING', 'CANCELLING')"),
         ),
+        Index(
+            "ix_workflow_runs_deadline",
+            "deadline_at",
+            postgresql_where=text("status IN ('PENDING', 'RUNNING') AND deadline_at IS NOT NULL"),
+        ),
         # Retention scans: oldest finished runs first.
         Index(
             "ix_workflow_runs_finished",
@@ -125,6 +130,9 @@ class WorkflowRun(Base):
     cancellation_requested_at: Mapped[datetime | None] = _ts()
     # Set when retention deleted this run's events (attempts and tasks are kept).
     events_pruned_at: Mapped[datetime | None] = _ts()
+    # Workflow deadline (created_at + definition.deadline_seconds), and when it fired.
+    deadline_at: Mapped[datetime | None] = _ts()
+    deadline_exceeded_at: Mapped[datetime | None] = _ts()
     updated_at: Mapped[datetime] = _ts(nullable=False, default_now=True)
 
 
@@ -136,6 +144,10 @@ class Task(Base):
         CheckConstraint("attempt_count >= 0", name="attempt_count_nonneg"),
         CheckConstraint("attempt_count <= attempt_limit", name="attempts_bounded"),
         CheckConstraint("timeout_seconds > 0", name="timeout_positive"),
+        CheckConstraint(
+            "queue_timeout_seconds IS NULL OR queue_timeout_seconds > 0",
+            name="queue_timeout_positive",
+        ),
         CheckConstraint(
             "(status = 'RUNNING') = (lease_owner IS NOT NULL AND lease_expires_at IS NOT NULL"
             " AND current_attempt_id IS NOT NULL)",
@@ -151,6 +163,11 @@ class Task(Base):
             name="completed_at_iff_terminal",
         ),
         Index("ix_tasks_ready", "ready_at", postgresql_where=text("status = 'READY'")),
+        Index(
+            "ix_tasks_queue_timeout",
+            "ready_at",
+            postgresql_where=text("status = 'READY' AND queue_timeout_seconds IS NOT NULL"),
+        ),
         Index(
             "ix_tasks_retry_due",
             "next_attempt_at",
@@ -174,6 +191,7 @@ class Task(Base):
     input_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     output_json: Mapped[Any | None] = mapped_column(JSONB)
     timeout_seconds: Mapped[float] = mapped_column(Float, nullable=False)
+    queue_timeout_seconds: Mapped[float | None] = mapped_column(Float)
     retry_policy: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     # attempt_count doubles as the lease generation / fencing token: it is
     # incremented by every successful claim and never decreases.

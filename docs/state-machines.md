@@ -64,6 +64,8 @@ stateDiagram-v2
     RUNNING --> CANCELLING: cancel requested while tasks RUNNING
     RUNNING --> CANCELLED: cancel requested, nothing running
     CANCELLING --> CANCELLED: no task RUNNING any more
+    RUNNING --> CANCELLING: workflow deadline passed
+    CANCELLING --> FAILED: no task RUNNING any more (stopped by the deadline)
     FAILED --> RUNNING: manual retry of a FAILED task
 ```
 
@@ -76,7 +78,37 @@ These are evaluated under the run-row lock (ADR 0005) after every terminal task 
 - **FAILED:** no task is BLOCKED, READY, RUNNING, or RETRY_WAIT, and at least one is
   FAILED, UPSTREAM_FAILED, or CANCELLED. `failure_reason` lists the FAILED tasks.
   Independent branches run to completion first.
-- **CANCELLED:** the run is CANCELLING and no task is RUNNING.
+- **CANCELLED:** the run is CANCELLING because of a user's cancel, and no task is
+  RUNNING.
+- **FAILED (deadline):** the run is CANCELLING because its workflow deadline passed,
+  and no task is RUNNING. `failure_reason` is `"workflow deadline exceeded"`.
+
+## Workflow deadlines and queue timeouts
+
+Both are optional fields in the definition (ADR 0014).
+
+- **`deadline_seconds`** (definition level, at most 30 days):
+  - At submission the run gets `deadline_at = created_at + deadline_seconds`.
+  - Once that time passes, the scheduler stops the run with the same mechanism as a
+    cancellation (below), within about one scheduler interval. It also records
+    `deadline_exceeded_at` and a `run_deadline_exceeded` event.
+  - The run then finalises as **FAILED**, not CANCELLED, because nobody chose to stop
+    it.
+  - Tasks that were already running stop cooperatively on their next heartbeat, as in
+    a cancellation.
+  - A run that failed its deadline cannot be manually retried. Start a new run instead.
+- **`queue_timeout_seconds`** (task level, at most 7 days):
+  - This is the maximum time a task may sit READY with no worker claiming it, for
+    example because no worker has capacity or none registers the handler.
+  - When it expires, the task becomes **FAILED** with `last_error_type = QueueTimeout`.
+    No attempt is created and `attempt_count` is unchanged. Dependents become
+    UPSTREAM_FAILED as usual.
+  - The clock restarts every time the task becomes READY, so time in RETRY_WAIT does
+    not count.
+  - If a claim and the timeout race, a conditional update decides: exactly one of
+    them wins, and the claim never waits.
+- The **execution timeout** (`timeout_seconds`) and the **lease timeout** are
+  unchanged. They bound a single attempt, and a stalled worker, respectively.
 
 ## Cancellation semantics
 

@@ -9,7 +9,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
-from sqlalchemy import and_, insert, select
+from sqlalchemy import and_, insert, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
@@ -100,7 +100,7 @@ async def create_definition(
             return row.id, True
         existing = (
             await conn.execute(
-                select(defs_t.c.id, defs_t.c.spec_hash).where(
+                select(defs_t.c.id, defs_t.c.spec_hash, defs_t.c.definition_json).where(
                     and_(
                         defs_t.c.tenant_id == tenant_id,
                         defs_t.c.name == spec.name,
@@ -109,7 +109,11 @@ async def create_definition(
                 )
             )
         ).one()
-        if existing.spec_hash != spec_hash:
+        # Compare through the *current* schema: a definition stored before a field
+        # was added lacks that key, so its stored hash would differ from an
+        # identical re-post. Re-validating normalises both sides.
+        stored = WorkflowDefinitionSpec.model_validate(existing.definition_json)
+        if canonical_hash(stored.model_dump(mode="json")) != spec_hash:
             raise ConflictError(
                 f"definition {spec.name!r} version {spec.version} already exists with "
                 "different content; publish a new version"
@@ -235,6 +239,13 @@ async def _insert_run(
             idempotency_key=idempotency_key,
             created_by=created_by,
             traceparent=traceparent,
+            deadline_at=(
+                text("statement_timestamp() + make_interval(secs => :deadline)").bindparams(
+                    deadline=definition.spec.deadline_seconds
+                )
+                if definition.spec.deadline_seconds
+                else None
+            ),
         )
     )
     task_ids = {key: uuid.uuid4() for key in definition.topological_order}
@@ -252,6 +263,7 @@ async def _insert_run(
                 "status": (TaskStatus.READY if is_root else TaskStatus.BLOCKED).value,
                 "input_json": spec.input,
                 "timeout_seconds": spec.timeout_seconds,
+                "queue_timeout_seconds": spec.queue_timeout_seconds,
                 "retry_policy": spec.retry.model_dump(mode="json"),
                 "attempt_limit": spec.retry.max_attempts,
                 "ready_at": now if is_root else None,

@@ -97,6 +97,9 @@ dependencies. The domain package has no I/O.
    - Expired leases: the same fenced statement, with `lease_expires_at < now` added
      to the fence. It marks the attempt `LEASE_EXPIRED`, applies the retry policy,
      then locks the run and runs progression.
+   - Workflow deadlines and queue timeouts (`engine/timeouts.py`, ADR 0014): an
+     overdue run is stopped like a cancellation and ends FAILED; a task READY for
+     longer than its queue timeout fails with `QueueTimeout`.
    - Reconcile stuck runs, every 5 cycles.
    - Retention, every `retention_interval_seconds` (default 60 s). It prunes events of
      old finished runs, deletes old finished runs, and removes stale worker rows, in

@@ -1,0 +1,13 @@
+{
+  "name": "time-boxed-report",
+  "version": 1,
+  "description": "Must finish within 2 minutes; the export step fails fast if no worker picks it up within 30 s",
+  "deadline_seconds": 120,
+  "tasks": [
+    {"id": "fetch", "handler": "fetch_data", "timeout_seconds": 30},
+    {"id": "total", "handler": "aggregate", "depends_on": ["fetch"],
+     "input": {"source": "fetch", "op": "sum"}},
+    {"id": "export", "handler": "combine", "depends_on": ["total"],
+     "queue_timeout_seconds": 30}
+  ]
+}

@@ -31,9 +31,12 @@ def task(
     max_attempts: int = 3,
     initial_delay: float = 0.05,
     max_delay: float = 0.2,
+    queue_timeout: float | None = None,
     **retry: Any,
 ) -> dict[str, Any]:
+    extra = {"queue_timeout_seconds": queue_timeout} if queue_timeout is not None else {}
     return {
+        **extra,
         "id": task_id,
         "handler": handler,
         "depends_on": depends_on or [],
@@ -58,10 +61,16 @@ async def start_run(
     name: str | None = None,
     idempotency_key: str | None = None,
     tenant: str = TENANT,
+    deadline: float | None = None,
 ) -> uuid.UUID:
-    spec = WorkflowDefinitionSpec.model_validate(
-        {"name": name or f"wf-{uuid.uuid4().hex[:8]}", "version": 1, "tasks": tasks}
-    )
+    doc: dict[str, Any] = {
+        "name": name or f"wf-{uuid.uuid4().hex[:8]}",
+        "version": 1,
+        "tasks": tasks,
+    }
+    if deadline is not None:
+        doc["deadline_seconds"] = deadline
+    spec = WorkflowDefinitionSpec.model_validate(doc)
     def_id, _ = await create_definition(
         engine, tenant_id=tenant, created_by="test", spec=spec, known_handlers=registry.names()
     )

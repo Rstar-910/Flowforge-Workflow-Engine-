@@ -166,6 +166,16 @@ async def finalize_run_if_done(conn: AsyncConnection, run: Mapping[str, Any]) ->
 
     if status is RunStatus.CANCELLING:
         if counts.get(TaskStatus.RUNNING, 0) == 0:
+            if run.get("deadline_exceeded_at") is not None:
+                # Stopped by the workflow deadline, not by a user: the run failed.
+                await set_run_status(
+                    conn,
+                    run,
+                    RunStatus.FAILED,
+                    completed_at=text("statement_timestamp()"),
+                    started_at=run["started_at"] or text("statement_timestamp()"),
+                )
+                return RunStatus.FAILED
             await set_run_status(
                 conn, run, RunStatus.CANCELLED, completed_at=text("statement_timestamp()")
             )

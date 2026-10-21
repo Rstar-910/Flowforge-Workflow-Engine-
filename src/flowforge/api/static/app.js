@@ -348,6 +348,12 @@ function renderRun() {
     ["Tasks", Object.entries(r.task_counts || {}).map(([k, v]) => `${v} ${k.toLowerCase()}`).join(", ") || "—"],
   ];
   if (r.idempotency_key) facts.push(["Idempotency key", r.idempotency_key]);
+  if (r.deadline_at) {
+    const left = (new Date(r.deadline_at) - Date.now()) / 1000;
+    facts.push(["Deadline", r.deadline_exceeded_at ? "exceeded"
+      : TERMINAL_RUN.has(r.status) ? new Date(r.deadline_at).toLocaleTimeString()
+      : left > 0 ? `in ${fmtMs(left * 1000)}` : "due now"]);
+  }
   $("run-facts").replaceChildren(...facts.map(([k, v]) => h("div", {}, h("dt", { text: k }), h("dd", { text: v }))));
   const fail = $("run-failure");
   fail.hidden = !r.failure_reason;
@@ -469,6 +475,7 @@ function renderTaskDetail() {
   retry.hidden = !(t.status === "FAILED" && state.isAdmin && ["RUNNING", "FAILED"].includes(state.run && state.run.status));
   const info = h("dl", { class: "facts" },
     ...[["Handler", t.handler], ["Status", t.status], ["Timeout", `${t.timeout_seconds}s`],
+      t.queue_timeout_seconds ? ["Queue timeout", `${t.queue_timeout_seconds}s`] : null,
       ["Max attempts", String(t.retry_policy.max_attempts)],
       t.next_attempt_at && t.status === "RETRY_WAIT" ? ["Next attempt", new Date(t.next_attempt_at).toLocaleTimeString()] : null,
       t.lease_expires_at ? ["Lease expires", new Date(t.lease_expires_at).toLocaleTimeString()] : null]

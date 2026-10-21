@@ -82,7 +82,8 @@ RUN_TRANSITIONS: dict[RunStatus, frozenset[RunStatus]] = {
     RunStatus.RUNNING: frozenset(
         {RunStatus.SUCCEEDED, RunStatus.FAILED, RunStatus.CANCELLING, RunStatus.CANCELLED}
     ),
-    RunStatus.CANCELLING: frozenset({RunStatus.CANCELLED}),
+    # CANCELLING -> FAILED only when the stop was caused by the workflow deadline.
+    RunStatus.CANCELLING: frozenset({RunStatus.CANCELLED, RunStatus.FAILED}),
     RunStatus.SUCCEEDED: frozenset(),
     RunStatus.FAILED: frozenset({RunStatus.RUNNING}),  # manual retry
     RunStatus.CANCELLED: frozenset(),

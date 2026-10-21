@@ -61,6 +61,8 @@ class RunOut(BaseModel):
     completed_at: datetime | None
     cancellation_requested_at: datetime | None
     events_pruned_at: datetime | None = None
+    deadline_at: datetime | None = None
+    deadline_exceeded_at: datetime | None = None
     task_counts: dict[str, int] | None = None
 
     @classmethod
@@ -85,6 +87,7 @@ class TaskOut(BaseModel):
     attempt_count: int
     attempt_limit: int
     timeout_seconds: float
+    queue_timeout_seconds: float | None = None
     retry_policy: dict[str, Any]
     lease_owner: str | None
     lease_expires_at: datetime | None

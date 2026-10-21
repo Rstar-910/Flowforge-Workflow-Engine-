@@ -117,6 +117,8 @@ A lease is a failure *detector*, not a kill switch:
 | Duplicate submissions | Same key and same body return the existing run. Same key with a different body gets 409. | concurrency and API tests |
 | Retention runs while an admin retries a FAILED run | Retention skips run rows locked by another transaction (`SKIP LOCKED`) and never touches active runs; a retried run clears its `events_pruned_at` marker. | `test_runs_locked_by_another_transaction_are_skipped`, `test_active_runs_are_never_deleted_however_old`, `test_manual_retry_clears_the_pruned_marker` |
 | Process-isolated handler cancelled twice (shutdown plus a teardown timeout) | The child process is signalled before any await, and reaping is shielded from further cancellation, so the handler never outlives its cancellation. | `test_cancelled_process_handler_never_outlives_cancellation` (a mutation check showed the old code orphaned the child) |
+| Workflow deadline passes while tasks are queued or running | Queued work is cancelled at once and running handlers are signalled (as in a cancellation). The run ends FAILED ("workflow deadline exceeded"), usually within one scheduler interval plus a heartbeat. | `test_deadline_stops_a_running_workflow_and_fails_it`, `test_deadline_with_nothing_running_fails_immediately` |
+| No worker claims a task in time (no capacity, or no worker with that handler) | With `queue_timeout_seconds`, the task fails with `QueueTimeout` without an attempt, and dependents become UPSTREAM_FAILED. A claim racing the timeout wins or loses atomically. | `test_queue_timeout_fails_a_task_no_worker_can_run`, `test_queue_timeout_races_with_claims_safely` (a mutation check confirms the race guard matters) |
 | Bug or manual database edit leaves a run inconsistent | The scheduler reconciler re-applies progression. | `test_reconciler_repairs_progression_after_manual_db_edit` |
 
 ## Known limitations and open risks
@@ -144,8 +146,6 @@ A lease is a failure *detector*, not a kill switch:
   and events are kept forever. Once a run is deleted, its idempotency key is reusable,
   so **the idempotency window equals the run retention period**. Partitioning
   `task_events` is not implemented.
-- **Queue timeout and workflow deadline** (spec section 11) are not implemented. Only
-  execution timeouts and lease timeouts exist.
 - **Compensation / sagas** are not implemented.
 - **Rate limiting** is per API process, not global.
 - The test suite runs PostgreSQL in Docker on one host. It does not exercise real
