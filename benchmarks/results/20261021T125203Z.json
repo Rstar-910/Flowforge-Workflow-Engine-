@@ -1,0 +1,1246 @@
+{
+  "environment": {
+    "timestamp": "2026-10-21T12:49:54.874301+00:00",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "cpu": "Apple A18 Pro",
+    "cpu_count": 6,
+    "python": "3.12.13",
+    "postgres": "postgres (PostgreSQL) 17.11",
+    "database_url_host": "localhost",
+    "process_env": {
+      "FLOWFORGE_LEASE_SECONDS": "10",
+      "FLOWFORGE_HEARTBEAT_INTERVAL_SECONDS": "3",
+      "FLOWFORGE_WORKER_POLL_INTERVAL_SECONDS": "0.05",
+      "FLOWFORGE_WORKER_MAX_POLL_INTERVAL_SECONDS": "0.25",
+      "FLOWFORGE_SCHEDULER_INTERVAL_SECONDS": "0.25",
+      "FLOWFORGE_WORKER_SHUTDOWN_GRACE_SECONDS": "1",
+      "FLOWFORGE_LOG_LEVEL": "WARNING",
+      "FLOWFORGE_LOG_FORMAT": "json",
+      "FLOWFORGE_API_KEYS": "bench-key:bench:admin",
+      "FLOWFORGE_HANDLER_MODULES": "flowforge.handlers.builtin"
+    },
+    "git_commit": null
+  },
+  "results": [
+    {
+      "scenario": "submission_http",
+      "trial": 0,
+      "requests": 1000,
+      "parallel": 16,
+      "errors": 0,
+      "runs_per_second": 257.0566578048316,
+      "tasks_per_run": 20,
+      "latency_ms": {
+        "n": 1000,
+        "p50": 52.9806459962856,
+        "p95": 100.9460253015277,
+        "p99": 181.7254192521795,
+        "max": 235.02345799352042
+      }
+    },
+    {
+      "scenario": "submission_http",
+      "trial": 1,
+      "requests": 1000,
+      "parallel": 16,
+      "errors": 0,
+      "runs_per_second": 244.90217749826783,
+      "tasks_per_run": 20,
+      "latency_ms": {
+        "n": 1000,
+        "p50": 56.724271504208446,
+        "p95": 108.53458122874135,
+        "p99": 205.70798875705796,
+        "max": 278.9618329843506
+      }
+    },
+    {
+      "scenario": "submission_http",
+      "trial": 2,
+      "requests": 1000,
+      "parallel": 16,
+      "errors": 0,
+      "runs_per_second": 221.8928941152596,
+      "tasks_per_run": 20,
+      "latency_ms": {
+        "n": 1000,
+        "p50": 60.622103497735225,
+        "p95": 142.52941216400336,
+        "p99": 216.08362790808312,
+        "max": 271.75987500231713
+      }
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 2.101387,
+      "tasks_per_second": 475.8761713097112,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 182.0,
+        "p95": 246.0,
+        "p99": 263.0,
+        "max": 265.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 2.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 1897.9155,
+        "p95": 1952.5177999999999,
+        "p99": 1954.60091,
+        "max": 1956.176
+      },
+      "scenario": "linear10",
+      "workers": 1,
+      "concurrency": 4,
+      "trial": 0
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 2.304994,
+      "tasks_per_second": 433.8406086957276,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 192.0,
+        "p95": 332.0,
+        "p99": 334.0,
+        "max": 334.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 2121.951,
+        "p95": 2135.9022,
+        "p99": 2139.8679700000002,
+        "max": 2147.785
+      },
+      "scenario": "linear10",
+      "workers": 1,
+      "concurrency": 4,
+      "trial": 1
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.873257,
+      "tasks_per_second": 533.8295813121211,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 156.0,
+        "p95": 218.0,
+        "p99": 246.01,
+        "max": 260.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 0.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 1653.1495,
+        "p95": 1675.7898,
+        "p99": 1684.20848,
+        "max": 1689.503
+      },
+      "scenario": "linear10",
+      "workers": 1,
+      "concurrency": 4,
+      "trial": 2
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.359988,
+      "tasks_per_second": 735.3006055935788,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 106.0,
+        "p95": 155.0,
+        "p99": 164.0,
+        "max": 173.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 1216.2735,
+        "p95": 1226.0661,
+        "p99": 1230.04654,
+        "max": 1240.297
+      },
+      "scenario": "linear10",
+      "workers": 2,
+      "concurrency": 4,
+      "trial": 0
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.427434,
+      "tasks_per_second": 700.5577841077065,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 111.0,
+        "p95": 174.0,
+        "p99": 194.01,
+        "max": 199.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 2.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 1276.981,
+        "p95": 1295.52835,
+        "p99": 1297.56677,
+        "max": 1299.425
+      },
+      "scenario": "linear10",
+      "workers": 2,
+      "concurrency": 4,
+      "trial": 1
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.355074,
+      "tasks_per_second": 737.9670778127247,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 107.0,
+        "p95": 162.0,
+        "p99": 187.0,
+        "max": 191.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 0.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 1208.4904999999999,
+        "p95": 1217.22645,
+        "p99": 1221.0037499999999,
+        "max": 1222.959
+      },
+      "scenario": "linear10",
+      "workers": 2,
+      "concurrency": 4,
+      "trial": 2
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.152951,
+      "tasks_per_second": 867.3395486885391,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 87.0,
+        "p95": 106.0,
+        "p99": 115.0,
+        "max": 120.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 969.409,
+        "p95": 1004.6893,
+        "p99": 1011.13838,
+        "max": 1011.374
+      },
+      "scenario": "linear10",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 0
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.124591,
+      "tasks_per_second": 889.2121669122375,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 81.0,
+        "p95": 99.0,
+        "p99": 103.0,
+        "max": 107.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 2.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 915.7005,
+        "p95": 937.4993000000001,
+        "p99": 940.28124,
+        "max": 949.413
+      },
+      "scenario": "linear10",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 1
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.181812,
+      "tasks_per_second": 846.1582722125007,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 87.0,
+        "p95": 108.0,
+        "p99": 114.0,
+        "max": 115.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 3.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 971.462,
+        "p95": 994.80935,
+        "p99": 1000.49445,
+        "max": 1015.092
+      },
+      "scenario": "linear10",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 2
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.884778,
+      "tasks_per_second": 551.7891231752493,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 771.5,
+        "p95": 1375.05,
+        "p99": 1425.2199999999998,
+        "max": 1441.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 4.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1809.5639999999999,
+        "p95": 1863.9785,
+        "p99": 1866.7373,
+        "max": 1867.427
+      },
+      "scenario": "wide50",
+      "workers": 1,
+      "concurrency": 8,
+      "trial": 0
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.9067,
+      "tasks_per_second": 545.4450097026275,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 923.0,
+        "p95": 1533.05,
+        "p99": 1585.61,
+        "max": 1599.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 19.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1869.9465,
+        "p95": 1891.47655,
+        "p99": 1893.3545100000001,
+        "max": 1893.824
+      },
+      "scenario": "wide50",
+      "workers": 1,
+      "concurrency": 8,
+      "trial": 1
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.743884,
+      "tasks_per_second": 596.3699420374292,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 690.5,
+        "p95": 1301.05,
+        "p99": 1356.61,
+        "max": 1371.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1700.6755,
+        "p95": 1726.74325,
+        "p99": 1729.33105,
+        "max": 1729.978
+      },
+      "scenario": "wide50",
+      "workers": 1,
+      "concurrency": 8,
+      "trial": 2
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.552358,
+      "tasks_per_second": 669.9485556810994,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 631.0,
+        "p95": 1034.05,
+        "p99": 1100.61,
+        "max": 1122.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1464.255,
+        "p95": 1487.16305,
+        "p99": 1518.50621,
+        "max": 1526.342
+      },
+      "scenario": "wide50",
+      "workers": 2,
+      "concurrency": 8,
+      "trial": 0
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.785341,
+      "tasks_per_second": 582.5217703508741,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 764.5,
+        "p95": 1513.1499999999999,
+        "p99": 1571.8299999999997,
+        "max": 1593.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1740.062,
+        "p95": 1758.8443,
+        "p99": 1761.28086,
+        "max": 1761.89
+      },
+      "scenario": "wide50",
+      "workers": 2,
+      "concurrency": 8,
+      "trial": 1
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.447615,
+      "tasks_per_second": 718.4230613802703,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 632.0,
+        "p95": 1058.0,
+        "p99": 1087.61,
+        "max": 1098.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1377.8465,
+        "p95": 1400.3147,
+        "p99": 1415.73814,
+        "max": 1419.594
+      },
+      "scenario": "wide50",
+      "workers": 2,
+      "concurrency": 8,
+      "trial": 2
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.459111,
+      "tasks_per_second": 712.7627713038967,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 592.0,
+        "p95": 1136.05,
+        "p99": 1190.2199999999998,
+        "max": 1200.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 3.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1331.158,
+        "p95": 1418.3684999999998,
+        "p99": 1418.4977,
+        "max": 1418.53
+      },
+      "scenario": "wide50",
+      "workers": 4,
+      "concurrency": 8,
+      "trial": 0
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.493228,
+      "tasks_per_second": 696.4776979804825,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 595.5,
+        "p95": 1237.1,
+        "p99": 1287.0,
+        "max": 1301.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1420.3445000000002,
+        "p95": 1458.9921499999998,
+        "p99": 1459.38963,
+        "max": 1459.489
+      },
+      "scenario": "wide50",
+      "workers": 4,
+      "concurrency": 8,
+      "trial": 1
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.528407,
+      "tasks_per_second": 680.4470275260451,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 609.5,
+        "p95": 1011.0999999999999,
+        "p99": 1064.0,
+        "max": 1079.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1432.7925,
+        "p95": 1458.6349,
+        "p99": 1473.90938,
+        "max": 1477.728
+      },
+      "scenario": "wide50",
+      "workers": 4,
+      "concurrency": 8,
+      "trial": 2
+    },
+    {
+      "runs": 100,
+      "tasks": 2000,
+      "tasks_succeeded": 2000,
+      "attempts": 2000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 2000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 2.305783,
+      "tasks_per_second": 867.3843115332189,
+      "queue_wait_ms": {
+        "n": 2000,
+        "p50": 264.0,
+        "p95": 374.0,
+        "p99": 379.0,
+        "max": 387.0
+      },
+      "execution_ms": {
+        "n": 2000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 2050.5935,
+        "p95": 2109.4418499999997,
+        "p99": 2112.6187200000004,
+        "max": 2119.224
+      },
+      "scenario": "mixed20",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 0
+    },
+    {
+      "runs": 100,
+      "tasks": 2000,
+      "tasks_succeeded": 2000,
+      "attempts": 2000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 2000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 3.965194,
+      "tasks_per_second": 504.3889403645824,
+      "queue_wait_ms": {
+        "n": 2000,
+        "p50": 386.5,
+        "p95": 874.0,
+        "p99": 1020.1099999999999,
+        "max": 1070.0
+      },
+      "execution_ms": {
+        "n": 2000,
+        "p50": 0.0,
+        "p95": 1.0,
+        "p99": 3.0,
+        "max": 7.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 3719.737,
+        "p95": 3744.45715,
+        "p99": 3757.3099500000003,
+        "max": 3762.057
+      },
+      "scenario": "mixed20",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 1
+    },
+    {
+      "runs": 100,
+      "tasks": 2000,
+      "tasks_succeeded": 2000,
+      "attempts": 2000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 2000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 4.841486,
+      "tasks_per_second": 413.0963096867367,
+      "queue_wait_ms": {
+        "n": 2000,
+        "p50": 551.0,
+        "p95": 964.0,
+        "p99": 1125.0,
+        "max": 1134.0
+      },
+      "execution_ms": {
+        "n": 2000,
+        "p50": 0.0,
+        "p95": 1.0,
+        "p99": 3.0,
+        "max": 6.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 4362.601000000001,
+        "p95": 4534.98995,
+        "p99": 4546.72833,
+        "max": 4547.157
+      },
+      "scenario": "mixed20",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 2
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1419,
+      "attempt_outcomes": {
+        "FAILED": 419,
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 4.97957,
+      "tasks_per_second": 200.8205527786536,
+      "queue_wait_ms": {
+        "n": 1419,
+        "p50": 598.0,
+        "p95": 1100.0,
+        "p99": 1156.4599999999998,
+        "max": 1171.0
+      },
+      "execution_ms": {
+        "n": 1419,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 2.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 1683.4325,
+        "p95": 2888.207349999998,
+        "p99": 4797.65455,
+        "max": 4932.448
+      },
+      "scenario": "flaky_p0.3",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 0
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1444,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000,
+        "FAILED": 444
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 3.887878,
+      "tasks_per_second": 257.20971697157165,
+      "queue_wait_ms": {
+        "n": 1444,
+        "p50": 467.5,
+        "p95": 874.0,
+        "p99": 919.0,
+        "max": 932.0
+      },
+      "execution_ms": {
+        "n": 1444,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 2.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 1385.2894999999999,
+        "p95": 2469.316599999999,
+        "p99": 3280.1361600000023,
+        "max": 3780.102
+      },
+      "scenario": "flaky_p0.3",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 1
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1408,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000,
+        "FAILED": 408
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 4.551021,
+      "tasks_per_second": 219.73091312916375,
+      "queue_wait_ms": {
+        "n": 1408,
+        "p50": 1182.0,
+        "p95": 1473.65,
+        "p99": 1496.93,
+        "max": 1506.0
+      },
+      "execution_ms": {
+        "n": 1408,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 8.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 2187.6865,
+        "p95": 3079.73875,
+        "p99": 4096.4483900000005,
+        "max": 4244.492
+      },
+      "scenario": "flaky_p0.3",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 2
+    },
+    {
+      "scenario": "crash_recovery",
+      "trial": 0,
+      "lease_seconds": 5.0,
+      "scheduler_interval_seconds": 1.0,
+      "recovery_seconds": {
+        "n": 4,
+        "p50": 6.127488,
+        "p95": 6.127488,
+        "p99": 6.127488,
+        "max": 6.127488
+      }
+    },
+    {
+      "scenario": "crash_recovery",
+      "trial": 1,
+      "lease_seconds": 5.0,
+      "scheduler_interval_seconds": 1.0,
+      "recovery_seconds": {
+        "n": 4,
+        "p50": 6.357365,
+        "p95": 6.357365,
+        "p99": 6.357365,
+        "max": 6.357365
+      }
+    },
+    {
+      "scenario": "crash_recovery",
+      "trial": 2,
+      "lease_seconds": 5.0,
+      "scheduler_interval_seconds": 1.0,
+      "recovery_seconds": {
+        "n": 4,
+        "p50": 6.332128,
+        "p95": 6.332128,
+        "p99": 6.332128,
+        "max": 6.332128
+      }
+    },
+    {
+      "scenario": "overload",
+      "offered_rate": 119.99439675367258,
+      "submit_seconds": 10.000466958998004,
+      "drained_after_seconds": 21.80129124998348,
+      "peak_ready_depth": 616,
+      "depth_samples": [
+        [
+          0.01,
+          0
+        ],
+        [
+          0.51,
+          42
+        ],
+        [
+          1.01,
+          71
+        ],
+        [
+          1.52,
+          104
+        ],
+        [
+          2.03,
+          138
+        ],
+        [
+          2.53,
+          167
+        ],
+        [
+          3.04,
+          199
+        ],
+        [
+          3.54,
+          229
+        ],
+        [
+          4.04,
+          257
+        ],
+        [
+          4.55,
+          289
+        ],
+        [
+          5.06,
+          321
+        ],
+        [
+          5.57,
+          348
+        ],
+        [
+          6.08,
+          385
+        ],
+        [
+          6.58,
+          413
+        ],
+        [
+          7.08,
+          450
+        ],
+        [
+          7.59,
+          478
+        ],
+        [
+          8.09,
+          505
+        ],
+        [
+          8.59,
+          539
+        ],
+        [
+          9.1,
+          567
+        ],
+        [
+          9.6,
+          596
+        ],
+        [
+          10.12,
+          616
+        ],
+        [
+          10.62,
+          588
+        ],
+        [
+          11.13,
+          564
+        ],
+        [
+          11.65,
+          536
+        ],
+        [
+          12.15,
+          508
+        ],
+        [
+          12.66,
+          480
+        ],
+        [
+          13.16,
+          452
+        ],
+        [
+          13.67,
+          424
+        ],
+        [
+          14.18,
+          396
+        ],
+        [
+          14.69,
+          368
+        ],
+        [
+          15.2,
+          340
+        ],
+        [
+          15.71,
+          316
+        ],
+        [
+          16.21,
+          288
+        ],
+        [
+          16.72,
+          260
+        ],
+        [
+          17.23,
+          232
+        ],
+        [
+          17.73,
+          204
+        ],
+        [
+          18.24,
+          176
+        ],
+        [
+          18.74,
+          152
+        ],
+        [
+          19.26,
+          124
+        ],
+        [
+          19.77,
+          96
+        ],
+        [
+          20.27,
+          68
+        ],
+        [
+          20.78,
+          40
+        ],
+        [
+          21.29,
+          12
+        ],
+        [
+          21.8,
+          0
+        ]
+      ],
+      "runs": 1200,
+      "tasks": 1200,
+      "tasks_succeeded": 1200,
+      "attempts": 1200,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1200
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 21.538511,
+      "tasks_per_second": 55.71415777070198,
+      "queue_wait_ms": {
+        "n": 1200,
+        "p50": 5413.0,
+        "p95": 10911.9,
+        "p99": 11405.18,
+        "max": 11516.0
+      },
+      "execution_ms": {
+        "n": 1200,
+        "p50": 50.0,
+        "p95": 52.0,
+        "p99": 54.0,
+        "max": 58.0
+      },
+      "run_e2e_ms": {
+        "n": 1200,
+        "p50": 5481.8045,
+        "p95": 10980.293749999999,
+        "p99": 11473.9583,
+        "max": 11576.225
+      }
+    }
+  ]
+}

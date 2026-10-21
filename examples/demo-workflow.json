@@ -1,0 +1,14 @@
+{
+  "name": "recovery-demo",
+  "version": 1,
+  "description": "A -> (B, C) -> D. B fails transiently once; C runs long enough to kill its worker.",
+  "tasks": [
+    {"id": "A", "handler": "fetch_data"},
+    {"id": "B", "handler": "fail_until", "depends_on": ["A"], "input": {"fail_times": 1},
+     "retry": {"max_attempts": 3, "initial_delay_seconds": 1, "max_delay_seconds": 5}},
+    {"id": "C", "handler": "sleep", "depends_on": ["A"], "input": {"seconds": 20},
+     "timeout_seconds": 60,
+     "retry": {"max_attempts": 3, "initial_delay_seconds": 1, "max_delay_seconds": 5}},
+    {"id": "D", "handler": "combine", "depends_on": ["B", "C"]}
+  ]
+}

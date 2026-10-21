@@ -1,0 +1,51 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: flowforge
+          POSTGRES_PASSWORD: flowforge
+          POSTGRES_DB: flowforge
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U flowforge"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      FLOWFORGE_REQUIRE_DB: "1"  # integration tests must run, never skip, in CI
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --locked
+      - name: migrations apply cleanly to an empty database
+        env:
+          FLOWFORGE_DATABASE_URL: postgresql+asyncpg://flowforge:flowforge@localhost:5433/flowforge
+        run: |
+          uv run flowforge migrate
+          uv run alembic check
+      - name: unit, integration, concurrency and failure-injection tests
+        run: uv run pytest -q
+      - name: quick benchmark smoke run (numbers are not compared in CI)
+        run: uv run python scripts/benchmark.py --quick --only linear,crash

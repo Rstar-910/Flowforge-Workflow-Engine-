@@ -1,0 +1,19 @@
+{
+  "name": "generate-report",
+  "version": 1,
+  "description": "Fetch data, run parallel aggregations, combine into a report",
+  "tasks": [
+    {"id": "fetch", "handler": "fetch_data", "timeout_seconds": 30,
+     "retry": {"max_attempts": 3, "initial_delay_seconds": 2, "max_delay_seconds": 30}},
+    {"id": "sum", "handler": "aggregate", "depends_on": ["fetch"],
+     "input": {"source": "fetch", "op": "sum"}, "timeout_seconds": 60,
+     "retry": {"max_attempts": 2, "initial_delay_seconds": 3, "max_delay_seconds": 20}},
+    {"id": "max", "handler": "aggregate", "depends_on": ["fetch"],
+     "input": {"source": "fetch", "op": "max"}},
+    {"id": "mean", "handler": "aggregate", "depends_on": ["fetch"],
+     "input": {"source": "fetch", "op": "mean"}},
+    {"id": "publish", "handler": "combine", "depends_on": ["sum", "max", "mean"],
+     "timeout_seconds": 30,
+     "retry": {"max_attempts": 4, "initial_delay_seconds": 2, "max_delay_seconds": 60}}
+  ]
+}

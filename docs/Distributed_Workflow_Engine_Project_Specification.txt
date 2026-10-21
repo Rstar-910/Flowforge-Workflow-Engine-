@@ -1,0 +1,851 @@
+DISTRIBUTED WORKFLOW ENGINE Detailed Project Specification and
+Implementation Plan Version 1.0 | October 2026
+
+====================================================================== 1.
+PROJECT OVERVIEW
+======================================================================
+
+Project name: FlowForge - A Durable Distributed Workflow Engine
+
+One-line description: Build a backend platform that lets developers
+define, submit, execute, monitor, retry, and recover multi-step
+workflows across a pool of worker processes, with durable state stored
+in a database.
+
+Why this project matters: Many backend systems need to perform work that
+cannot safely happen in one HTTP request. Examples include processing
+uploaded files, generating reports, provisioning resources, sending
+notifications, running data pipelines, and coordinating calls to
+multiple services. A process may crash, a network request may time out,
+or a dependency may become unavailable halfway through the operation.
+
+    This project explores the engineering problems behind durable job
+    execution: persistence, scheduling, retries, concurrency, idempotency,
+    worker coordination, observability, and failure recovery.
+
+Important scope statement: This is an educational portfolio project, not
+a claim that the first version provides production-grade guarantees.
+Build and test the guarantees you advertise. In particular, exactly-once
+execution is generally not achievable for arbitrary external side
+effects without cooperation from the side-effecting system. The
+practical goal is durable, at-least-once task delivery with idempotency
+mechanisms and clearly documented limitations.
+
+======================================================================
+2. PROJECT GOALS
+======================================================================
+
+Primary goals: 1. Accept workflow definitions through an API. 2. Persist
+workflow definitions, runs, tasks, and execution state. 3. Execute tasks
+on independent worker processes. 4. Support sequential dependencies and
+parallel branches. 5. Retry failed tasks according to configurable
+policies. 6. Recover eligible work after a worker crashes or loses its
+lease. 7. Prevent duplicate submissions from creating duplicate workflow
+runs when the same idempotency key is reused. 8. Expose workflow status,
+task history, errors, and execution timing. 9. Measure throughput, queue
+wait time, execution latency, and recovery. 10. Provide a reproducible
+local development environment and automated tests.
+
+Non-goals for the initial release: - Replacing Temporal, Airflow,
+Celery, or a cloud workflow service. - Building a general-purpose
+programming language for workflows. - Guaranteeing exactly-once side
+effects in arbitrary external systems. - Supporting arbitrary untrusted
+code execution. - Starting with Kubernetes, a large microservice fleet,
+or multiple databases. - Adding machine learning merely to make the
+project sound more advanced.
+
+======================================================================
+3. TARGET USERS AND USE CASES
+======================================================================
+
+Target users: - Backend developers who need reliable background
+workflows. - Platform engineers building internal automation. -
+Developers who want to understand distributed execution systems.
+
+Example use cases: A. File-processing workflow 1. Validate an uploaded
+file. 2. Extract metadata. 3. Transform the data. 4. Store results. 5.
+Notify the requester.
+
+B. Report-generation workflow 1. Fetch source data. 2. Run several
+independent aggregations in parallel. 3. Combine the results. 4.
+Generate a report. 5. Publish the report and mark the run complete.
+
+C. Multi-service operation 1. Create a resource. 2. Configure the
+resource. 3. Verify health. 4. Send a completion event. If a step fails,
+retry it or execute a compensating action where the workflow definition
+supports one.
+
+D. Scheduled maintenance 1. Discover eligible records. 2. Process
+records in bounded batches. 3. Record outcomes. 4. Summarize failures.
+
+======================================================================
+4. CORE CONCEPTS AND TERMINOLOGY
+======================================================================
+
+Workflow definition: A versioned description of tasks, dependencies,
+inputs, retry policies, timeouts, and optional compensation behavior.
+
+Workflow run: One execution instance of a workflow definition.
+
+Task: A unit of work with a stable identifier, input, handler type,
+timeout, retry policy, and dependency list.
+
+Task attempt: One particular execution attempt for a task. A task may
+have multiple attempts after failures or timeouts.
+
+Worker: A separate process that claims eligible tasks, executes
+registered task handlers, and reports results.
+
+Queue: The set of tasks eligible for execution. In the initial version,
+task eligibility and claiming are represented in PostgreSQL rather than
+requiring a separate message broker.
+
+Lease: A time-limited claim on a task. A worker periodically renews its
+lease while executing. If the worker dies and the lease expires,
+recovery logic can make the task eligible again.
+
+Heartbeat: A periodic worker update indicating that a claimed task is
+still active.
+
+Idempotency key: A caller-provided key that allows a repeated submission
+request to return the existing run instead of creating another run.
+
+Retry policy: A rule defining which failures are retryable, the maximum
+number of attempts, and the delay between attempts.
+
+Dead-letter state: A terminal failure state for work that has exhausted
+its retry policy or cannot proceed without intervention.
+
+Compensation: An explicitly defined action intended to counteract a
+completed step, such as releasing a reserved resource. Compensation is
+not the same as a database rollback and may itself fail.
+
+======================================================================
+5. RECOMMENDED TECHNOLOGY STACK
+======================================================================
+
+Core implementation: - Go for the API, scheduler, and worker
+processes. - PostgreSQL as the durable source of truth. - Redis is
+optional in a later stage for caching, notifications, or coordination
+that does not replace durable database state. - REST/JSON API initially;
+gRPC can be an extension. - OpenTelemetry-compatible instrumentation. -
+Prometheus metrics. - A small React or server-rendered dashboard,
+optional after the core engine. - Docker Compose for reproducible local
+development. - GitHub Actions or equivalent CI.
+
+Why Go: - Good support for concurrent services and networking. -
+Straightforward deployment as a single binary. - Useful experience for
+backend, platform, and infrastructure roles.
+
+Why PostgreSQL first: - Transactions and row locking support safe task
+claiming. - Durable task state and workflow metadata can live in one
+system. - It reduces moving parts while the correctness model is being
+developed.
+
+Important design decision: Do not add Kafka or Redis as the primary
+queue in version one. First implement safe claiming and recovery with
+PostgreSQL transactions. Introduce another broker only when a measured
+requirement justifies the extra operational and consistency complexity.
+
+Alternative stack: Python with FastAPI and PostgreSQL is acceptable if
+Python is the language in which you can implement and test the most
+thoroughly. Go is the recommended choice for the main portfolio version.
+
+======================================================================
+6. HIGH-LEVEL ARCHITECTURE
+======================================================================
+
+Components:
+
+1.  API service
+    -   Accepts workflow definitions and run requests.
+    -   Validates inputs and dependency graphs.
+    -   Enforces authentication and request limits if enabled.
+    -   Returns workflow and task status.
+    -   Uses PostgreSQL transactions for durable writes.
+2.  PostgreSQL
+    -   Stores definitions, runs, tasks, attempts, events, and
+        idempotency keys.
+    -   Is the source of truth for task state.
+    -   Uses transactions and row locks to coordinate competing workers.
+3.  Scheduler / recovery loop
+    -   Finds tasks whose dependencies are complete.
+    -   Makes eligible tasks ready for execution.
+    -   Detects expired worker leases.
+    -   Applies retry timing and terminal-state transitions.
+    -   Must be safe to run in more than one scheduler process if that
+        is a supported deployment mode.
+4.  Worker process
+    -   Claims a ready task transactionally.
+    -   Records an attempt and lease.
+    -   Executes a registered handler.
+    -   Renews its lease while active.
+    -   Persists success or failure.
+    -   Stops claiming new tasks during graceful shutdown.
+5.  Observability
+    -   Structured logs with workflow_id, run_id, task_id, attempt_id,
+        and worker_id.
+    -   Metrics for throughput, latency, retries, failures, queue depth,
+        and expired leases.
+    -   Traces across API, scheduler, and worker operations where
+        practical.
+6.  Optional web dashboard
+    -   Lists workflow runs.
+    -   Shows task dependencies and current states.
+    -   Displays attempt history and error summaries.
+    -   Allows authorized cancellation or retry of eligible failed
+        tasks.
+
+Text architecture:
+
+    Client
+      |
+      v
+    REST API ----------------------> PostgreSQL
+                                      ^    ^
+                                      |    |
+                           Scheduler /    Worker pool
+                           recovery loop  (N processes)
+                                           |
+                                           v
+                                    Registered handlers
+
+    Metrics, logs, and traces are emitted by API, scheduler, and workers.
+    The dashboard reads workflow state through the API.
+
+======================================================================
+7. WORKFLOW DEFINITION FORMAT
+======================================================================
+
+Use JSON for the first version. Keep the schema explicit and versioned.
+
+Illustrative example:
+
+{ “name”: “generate-report”, “version”: 1, “tasks”: [ { “id”: “fetch”,
+“handler”: “fetch_data”, “depends_on”: [], “timeout_seconds”: 30,
+“retry”: { “max_attempts”: 3, “initial_delay_seconds”: 2,
+“max_delay_seconds”: 30 } }, { “id”: “aggregate”, “handler”:
+“aggregate_data”, “depends_on”: [“fetch”], “timeout_seconds”: 60,
+“retry”: { “max_attempts”: 2, “initial_delay_seconds”: 3,
+“max_delay_seconds”: 20 } }, { “id”: “publish”, “handler”:
+“publish_report”, “depends_on”: [“aggregate”], “timeout_seconds”: 30,
+“retry”: { “max_attempts”: 4, “initial_delay_seconds”: 2,
+“max_delay_seconds”: 60 } } ] }
+
+This is an illustrative schema, not a finished API contract. Validate
+every field, reject unknown or invalid dependency references, reject
+duplicate task IDs, and reject cycles before storing a definition.
+
+Task inputs and outputs: - Define how a task receives static input and
+outputs from dependencies. - Store small JSON values in PostgreSQL. -
+Store large artifacts externally only in a later version, using
+references. - Set size limits to avoid accidentally turning the database
+into an unbounded artifact store. - Avoid placing secrets directly in
+workflow JSON or logs.
+
+======================================================================
+8. TASK AND WORKFLOW STATE MACHINES
+======================================================================
+
+Recommended task states: - BLOCKED: one or more dependencies are
+incomplete. - READY: dependencies are complete and the task may be
+claimed. - RUNNING: a worker owns a valid lease. - RETRY_WAIT: a retry
+is scheduled for a future time. - SUCCEEDED: the handler completed and
+the result was persisted. - FAILED: the task exhausted retries or
+encountered a terminal error. - CANCELLED: execution was cancelled
+before completion where possible.
+
+Possible transitions: BLOCKED -> READY READY -> RUNNING RUNNING ->
+SUCCEEDED RUNNING -> RETRY_WAIT RUNNING -> FAILED RETRY_WAIT -> READY
+READY -> CANCELLED BLOCKED -> CANCELLED RUNNING -> cancellation
+requested, then terminal state after handler cooperates or reaches its
+enforced timeout.
+
+Expired lease recovery: RUNNING with expired lease -> READY or
+RETRY_WAIT, depending on policy.
+
+A workflow run can be: - PENDING - RUNNING - SUCCEEDED - FAILED -
+CANCELLING - CANCELLED
+
+Workflow completion rules: - A run succeeds when all required tasks have
+succeeded. - A run fails when a required task reaches terminal failure
+and no valid recovery or compensation path remains. - A run is cancelled
+when cancellation has been completed as far as the engine can safely
+enforce. - Define how optional tasks, skipped tasks, and compensation
+affect completion before implementing those features.
+
+State transitions must be validated in code and, where useful,
+reinforced with database constraints. Do not allow arbitrary state
+updates from API clients.
+
+======================================================================
+9. DATABASE DESIGN
+======================================================================
+
+Suggested tables:
+
+workflow_definitions - id: primary key - name - version -
+definition_json - created_at - created_by
+
+workflow_runs - id: primary key - definition_id - status - input_json -
+output_json, nullable - idempotency_key, nullable - created_at -
+started_at, nullable - completed_at, nullable -
+cancellation_requested_at, nullable
+
+tasks - id: primary key - run_id - task_key: stable ID within the
+workflow run - handler_name - status - input_json - output_json,
+nullable - dependency information or a normalized dependency relation -
+attempt_count - next_attempt_at, nullable - timeout_seconds -
+created_at - started_at, nullable - completed_at, nullable - last_error,
+nullable
+
+task_dependencies - task_id - depends_on_task_id - composite primary
+key(task_id, depends_on_task_id)
+
+task_attempts - id: primary key - task_id - attempt_number - worker_id -
+lease_token or lease generation - started_at - ended_at, nullable -
+outcome, nullable - error_type, nullable - error_message, nullable -
+duration_ms, nullable
+
+task_events - id: primary key - run_id - task_id, nullable -
+event_type - event_json - created_at
+
+workers, optional - worker_id - last_heartbeat_at - version -
+metadata_json
+
+idempotency_records, if not stored on workflow_runs - caller_scope -
+idempotency_key - request_hash - workflow_run_id - created_at -
+unique(caller_scope, idempotency_key)
+
+Indexes to consider: - tasks(status, next_attempt_at) - tasks(run_id,
+status) - task_attempts(task_id, attempt_number) - task_events(run_id,
+created_at) - workflow_runs(created_at, status) - unique(run_id,
+task_key) - unique(definition_id, version) - unique caller scope plus
+idempotency key
+
+Use foreign keys and suitable deletion policies. Avoid deleting
+historical runs accidentally when definitions are updated. Consider
+partitioning event tables only if data volume and measurements justify
+it.
+
+Schema notes: - PostgreSQL JSONB is convenient for flexible inputs and
+outputs, but query critical fields relationally. - Use UTC timestamps. -
+Store enough attempt history to explain why a task failed. - Decide
+whether task_events is an append-only audit trail. - Apply migrations
+through a versioned migration tool. - Never depend on in-memory state as
+the only record of an active task.
+
+======================================================================
+10. TASK CLAIMING AND WORKER COORDINATION
+======================================================================
+
+The task claim operation is a critical correctness boundary.
+
+A worker should: 1. Begin a database transaction. 2. Select an eligible
+READY task using row locking, commonly with FOR UPDATE SKIP LOCKED. 3.
+Verify that it remains eligible and dependencies are complete. 4. Change
+its state to RUNNING. 5. Increment the attempt count and create an
+attempt record. 6. Assign a lease expiration and a unique lease token or
+generation. 7. Commit the transaction. 8. Execute the handler outside
+the transaction.
+
+Do not hold a database transaction open while a task performs a long
+network request or computation. Long-lived transactions create lock
+contention and other database problems.
+
+Lease renewal: - A worker renews its lease periodically. - Renewal
+succeeds only if the task is still RUNNING and the worker’s lease token
+or generation matches. - If renewal fails, the worker should stop
+treating itself as the owner and avoid committing a result. - A lease is
+a failure-detection mechanism, not proof that the old process has
+stopped. Pauses and network partitions can leave an old worker running.
+
+Fencing and stale workers: - Use a monotonically increasing lease
+generation or fencing token where practical. - Reject result writes from
+an old generation. - For external side effects, pass an idempotency key
+or fencing token to the downstream system if it supports one. - A
+database lease alone cannot prevent a stale worker from sending a
+duplicate email or charging a payment provider after losing its lease.
+
+Task result commit: - Persist output, attempt outcome, task status, and
+relevant event records in one transaction. - Confirm that the worker
+still owns the current lease generation. - If the task is already
+terminal or the lease is stale, do not overwrite the accepted result.
+
+======================================================================
+11. RETRIES, TIMEOUTS, AND FAILURE HANDLING
+======================================================================
+
+Retry policy should include: - Maximum total attempts. - Initial
+delay. - Maximum delay. - Backoff multiplier. - Random jitter to avoid
+synchronized retry storms. - Which error classes are retryable. -
+Optional overall workflow deadline.
+
+Illustrative exponential backoff: delay = min(max_delay, initial_delay *
+multiplier^(attempt_number - 1)) actual_delay =
+apply_random_jitter(delay)
+
+This formula is conceptual. Implement bounded values and test edge
+cases.
+
+Retryable examples: - Temporary network failures. - Explicit rate-limit
+responses, respecting Retry-After when available. - Temporary dependency
+unavailability. - Selected transient database errors.
+
+Usually non-retryable without changing input: - Invalid workflow
+definitions. - Unsupported handler names. - Schema validation errors. -
+Authorization failures. - Deterministic input errors.
+
+Timeout types: - Queue timeout: maximum wait before a task starts. -
+Execution timeout: maximum permitted execution duration. - Lease
+timeout: period after which an unrenewed claim may be recovered. -
+Workflow deadline: maximum total time for a run.
+
+A Go context deadline or cancellation signal does not forcibly kill
+arbitrary code. Task handlers must cooperate with cancellation, and hard
+isolation may require subprocesses. Document that distinction.
+
+Dead-letter handling: - Preserve the error, attempts, timestamps, and
+relevant diagnostic context. - Allow authorized inspection and a
+controlled manual retry if policy permits. - Do not retry forever. -
+Make manual replay behavior explicit, especially for tasks with side
+effects.
+
+======================================================================
+12. IDEMPOTENCY AND EXECUTION GUARANTEES
+======================================================================
+
+Submission idempotency: - The client sends an idempotency key. - The
+server stores the key with a request hash and run ID transactionally. -
+Repeated requests with the same key and same request return the existing
+run. - Reusing the same key with a different request body returns a
+conflict. - Scope keys to a tenant or caller when multi-tenancy is
+supported.
+
+Task idempotency: - Give each logical task execution a stable
+identity. - For downstream operations, use a stable operation key where
+the external system supports idempotency. - Design database writes to
+tolerate a task being attempted more than once. - Clearly mark handlers
+that cannot be safely retried.
+
+Execution semantics: - The engine may deliver a task for execution more
+than once after a crash, timeout, or uncertain result. - Persisted task
+state prevents many duplicates but cannot make arbitrary external
+effects exactly-once. - Describe the system as durable, at-least-once
+execution with idempotency controls, not universal exactly-once
+execution. - Test the ambiguous case where a handler performs an
+external effect and crashes before recording success.
+
+======================================================================
+13. API DESIGN
+======================================================================
+
+Suggested endpoints:
+
+POST /v1/workflow-definitions Create a versioned workflow definition.
+
+GET /v1/workflow-definitions List definitions.
+
+GET /v1/workflow-definitions/{definition_id} Retrieve a definition.
+
+POST /v1/workflow-definitions/{definition_id}/runs Start a workflow run.
+Accept input and an idempotency key.
+
+GET /v1/runs/{run_id} Retrieve run status, timestamps, and summary.
+
+GET /v1/runs/{run_id}/tasks List tasks and states.
+
+GET /v1/tasks/{task_id}/attempts Retrieve attempt history.
+
+GET /v1/runs/{run_id}/events Retrieve execution events, optionally
+paginated.
+
+POST /v1/runs/{run_id}/cancel Request cancellation.
+
+POST /v1/tasks/{task_id}/retry Request an authorized retry for a
+terminal failed task, subject to policy.
+
+GET /health/live Indicate whether the process is alive.
+
+GET /health/ready Indicate whether the process can serve requests,
+including required dependency checks.
+
+GET /metrics Expose metrics to the monitoring system.
+
+API requirements: - Validate payloads and set request-size limits. - Use
+consistent error objects and appropriate HTTP status codes. - Paginate
+lists and event histories. - Add authentication before exposing
+administrative controls. - Enforce authorization on every run, task, and
+definition. - Add request IDs and structured logs. - Document endpoints
+with OpenAPI. - Do not expose stack traces, secrets, or internal
+credentials to clients.
+
+======================================================================
+14. OBSERVABILITY AND OPERATIONS
+======================================================================
+
+Structured log fields: - timestamp - level - service - request_id -
+workflow_run_id - task_id - attempt_id - worker_id - event_type -
+duration_ms - error_type
+
+Metrics: - workflow_runs_submitted_total - workflow_runs_completed_total
+by outcome - tasks_claimed_total - tasks_completed_total by outcome -
+task_retries_total - task_execution_duration_seconds -
+task_queue_wait_seconds - ready_queue_depth - running_task_count -
+expired_leases_total - worker_heartbeat_age_seconds -
+database_operation_duration_seconds - scheduler_cycle_duration_seconds
+
+Avoid using unique run IDs, task IDs, or user IDs as metric labels
+because unbounded label cardinality can damage monitoring performance.
+Put those identifiers in logs and traces instead.
+
+Dashboard views: - Overall workflow success and failure rates. - Ready
+and retry-wait task counts. - Queue wait and task execution latency
+percentiles. - Worker health and active leases. - Recent failed tasks
+with attempt history. - Per-run dependency graph and timeline. -
+Drill-down from a run to tasks, attempts, and error messages.
+
+Define alerts only after you have baseline measurements. Examples
+include a persistently growing queue, elevated terminal failure rate, or
+repeated lease expiration.
+
+======================================================================
+15. SECURITY REQUIREMENTS
+======================================================================
+
+Even a portfolio system should not treat security as decoration.
+
+-   Never execute arbitrary user-provided shell commands in the API or
+    worker.
+-   Use a registry of known handler names.
+-   Validate all workflow inputs and limit payload sizes.
+-   Use parameterized SQL queries.
+-   Keep secrets out of workflow definitions, logs, and error responses.
+-   Apply least-privilege database credentials.
+-   Require authentication and authorization for sensitive endpoints.
+-   Rate-limit run creation if exposed beyond localhost.
+-   Avoid exposing internal network endpoints through user-controlled
+    URLs.
+-   Set connection, execution, and request timeouts.
+-   Pin and scan dependencies where practical.
+-   Use non-root containers in local deployments where practical.
+-   If multi-tenancy is added, test cross-tenant data access explicitly.
+-   Treat any future arbitrary-code execution feature as a separate
+    security project requiring process/container isolation, resource
+    quotas, and a carefully reviewed threat model.
+
+======================================================================
+16. TESTING STRATEGY
+======================================================================
+
+Unit tests: - Workflow definition validation. - Cycle detection and
+dependency validation. - Retry delay calculation and jitter bounds. -
+State transition rules. - Idempotency key behavior. - Timeout and
+cancellation logic. - Error classification.
+
+Integration tests: - API submission and status retrieval. - Database
+migrations and transaction behavior. - Multiple workers claiming tasks
+concurrently. - Dependency scheduling. - Retry scheduling. -
+Cancellation behavior. - Run completion and failure propagation.
+
+Concurrency tests: - Start many workers against a queue of tasks. -
+Verify that two workers do not both successfully claim the same lease
+generation. - Verify task state and attempt counts under contention. -
+Repeat tests enough times to catch race conditions.
+
+Failure-injection tests: 1. Kill a worker immediately after it claims a
+task. 2. Kill a worker while the handler is executing. 3. Kill a worker
+after the handler’s side effect but before success is saved. 4. Stop
+PostgreSQL temporarily. 5. Delay heartbeat updates. 6. Let a lease
+expire while a worker is paused. 7. Make a dependency fail permanently.
+8. Submit the same idempotency key concurrently. 9. Cancel a workflow
+with both ready and running tasks. 10. Restart the scheduler while
+retry-wait tasks exist.
+
+Important expected results: - No workflow should silently disappear
+after accepted submission. - Invalid dependency graphs must never start
+executing. - A stale worker must not overwrite a newer accepted task
+result. - Retry counts must remain bounded. - Repeated submission with
+the same key must not create multiple runs. - The system must record
+ambiguous side-effect outcomes rather than claiming it can magically
+determine whether an external action happened.
+
+Property-based tests can later generate random acyclic dependency graphs
+and check that tasks never start before their dependencies succeed.
+
+======================================================================
+17. BENCHMARKING AND PERFORMANCE EVALUATION
+======================================================================
+
+Performance numbers must come from actual repeatable experiments. Do not
+write target values in the README as if they were achieved results.
+
+Benchmark dimensions: - Number of concurrent workers. - Number of tasks
+submitted. - Task duration: short no-op tasks and longer simulated
+tasks. - Dependency shape: linear chain, wide parallel fan-out, and
+mixed DAG. - Failure rate and retry frequency. - Database latency and
+connection-pool size. - Scheduler polling interval or notification
+strategy.
+
+Measurements: - Submission throughput in runs per second. - Task
+completion throughput in tasks per second. - p50, p95, and p99 queue
+wait time. - p50, p95, and p99 execution duration. - Database CPU and
+query latency. - Queue growth under overload. - Time from worker crash
+to task recovery. - Duplicate accepted-result count. - Retry rate and
+terminal failure rate. - Memory use per worker.
+
+Benchmark methodology: 1. Document hardware, operating system, Go
+version, PostgreSQL version, and configuration. 2. Separate warm-up from
+measured runs. 3. Run multiple trials and report variation. 4. Keep
+workloads and settings consistent when comparing configurations. 5. Use
+a baseline implementation or previous commit. 6. Include raw output or
+scripts to reproduce the results. 7. Report failures and trade-offs, not
+only the best number. 8. Do not compare results measured under
+materially different conditions.
+
+Useful experiments: - One worker versus multiple workers. - Polling
+interval changes versus database notification mechanisms. - Different
+batch sizes for claiming tasks. - Different indexes and query plans. -
+Simulated transient failures with and without jitter. - Small versus
+large workflow DAGs.
+
+======================================================================
+18. IMPLEMENTATION ROADMAP
+======================================================================
+
+PHASE 0: Design and repository setup Estimated effort: 2-3 days
+
+Tasks: - Create repository and document the system’s scope. - Define
+state machines and transition rules. - Write initial database schema and
+migration setup. - Define JSON workflow schema and example workflows. -
+Create local configuration and test strategy.
+
+Exit criteria: - The design explains task claiming, leases, retries, and
+idempotency. - A developer can run the database and tests locally.
+
+PHASE 1: Single-process durable workflow runner Estimated effort: 4-6
+days
+
+Tasks: - Implement workflow validation and cycle detection. - Implement
+definitions, runs, tasks, and dependencies. - Add basic API endpoints. -
+Execute tasks sequentially in one process. - Persist outputs and state
+transitions.
+
+Exit criteria: - A sample workflow can run end-to-end. - Restarting the
+API does not erase completed state. - Invalid workflow definitions are
+rejected.
+
+PHASE 2: Independent worker processes Estimated effort: 5-7 days
+
+Tasks: - Implement transactional task claiming. - Add worker IDs,
+attempts, leases, and heartbeats. - Run multiple workers against the
+same PostgreSQL database. - Add graceful shutdown and claim-loop
+cancellation. - Prevent stale workers from writing accepted results.
+
+Exit criteria: - Multiple workers process tasks concurrently. -
+Concurrency integration tests pass. - Worker crash recovery is
+demonstrated.
+
+PHASE 3: Retries and workflow reliability Estimated effort: 4-6 days
+
+Tasks: - Implement bounded exponential backoff and jitter. - Classify
+retryable and terminal errors. - Implement expired-lease recovery. - Add
+submission idempotency keys. - Define timeout and cancellation
+behavior. - Record execution events and attempt history.
+
+Exit criteria: - Retry and recovery tests pass. - Duplicate submission
+behavior is deterministic. - Execution guarantees and limitations are
+documented.
+
+PHASE 4: Observability and operational readiness Estimated effort: 4-6
+days
+
+Tasks: - Add structured logs and metrics. - Instrument latency and queue
+depth. - Add health and readiness endpoints. - Create a minimal
+dashboard or useful CLI. - Add failure-injection scripts.
+
+Exit criteria: - A demo can show task state, attempts, and recovery. -
+Metrics make queue and worker problems diagnosable.
+
+PHASE 5: Benchmarking and polish Estimated effort: 4-7 days
+
+Tasks: - Build reproducible workload generators. - Benchmark throughput
+and tail latency. - Optimize measured database bottlenecks. - Add CI,
+linting, formatting, and migration tests. - Write architecture diagrams
+and design decisions. - Record a short demo.
+
+Exit criteria: - Results are reproducible. - README includes
+architecture, guarantees, limitations, and real metrics. - A reviewer
+can run the system without guesswork.
+
+PHASE 6: Optional advanced extensions Estimated effort: variable
+
+Choose only after the core engine is reliable: - Workflow versioning and
+replay. - Scheduled and recurring workflows. - Compensation and saga
+patterns. - Per-tenant quotas and fairness. - gRPC API and typed SDK. -
+PostgreSQL LISTEN/NOTIFY to reduce polling overhead. - Redis-backed
+caching or notifications where justified. - Distributed tracing. -
+Worker autoscaling based on queue depth. - Workflow visualization and
+timeline. - Artifact storage references for large outputs.
+
+Do not attempt all extensions before correctness, tests, and
+documentation are complete.
+
+======================================================================
+19. REPOSITORY STRUCTURE
+======================================================================
+
+Suggested layout:
+
+flowforge/ cmd/ api/ main.go worker/ main.go scheduler/ main.go
+internal/ api/ config/ workflow/ scheduler/ worker/ task/ persistence/
+retry/ observability/ auth/ migrations/ examples/ simple-workflow.json
+report-workflow.json tests/ integration/ concurrency/ failure/
+benchmark/ scripts/ run-local.sh inject-worker-crash.sh benchmark.sh
+docs/ architecture.md state-machines.md failure-model.md
+benchmark-results.md decisions/ deployments/ docker-compose.yml .github/
+workflows/ Makefile go.mod README.md LICENSE
+
+Keep package boundaries meaningful. Avoid creating a separate package
+for every tiny struct, and do not let the HTTP layer contain scheduler
+logic or database transaction details.
+
+======================================================================
+20. LOCAL DEVELOPMENT AND DEMO
+======================================================================
+
+A reviewer should be able to: 1. Clone the repository. 2. Copy an
+example environment file. 3. Start PostgreSQL and optional monitoring
+services. 4. Run migrations. 5. Start the API, scheduler, and two or
+more workers. 6. Submit a sample workflow using curl or a small client.
+7. Watch task states change. 8. Stop one worker during execution. 9.
+Observe lease expiration and recovery. 10. Inspect attempt history and
+metrics.
+
+Provide commands in the README and keep secrets out of committed files.
+The first demo should not require a cloud account or paid service.
+
+Recommended demo workflow: - Task A produces a small JSON result. -
+Tasks B and C run in parallel after A. - Task D joins B and C and
+produces a final result. - Configure one task to fail transiently once,
+then succeed. - Configure another task to exceed a timeout or lose its
+worker. - Show retry, recovery, and final workflow state.
+
+Include a clear warning that simulated failures demonstrate the tested
+behavior only; they do not prove every possible distributed failure is
+safe.
+
+======================================================================
+21. DOCUMENTATION DELIVERABLES
+======================================================================
+
+The repository should contain:
+
+README.md - Project summary. - Feature list. - Architecture diagram. -
+Quick-start instructions. - Example API calls. - Test and benchmark
+commands. - Screenshots or demo recording. - Limitations and roadmap.
+
+docs/architecture.md - Component responsibilities. - Request and task
+lifecycle. - Database interactions. - Scheduling and recovery design.
+
+docs/state-machines.md - Workflow and task states. - Allowed
+transitions. - Cancellation and failure semantics.
+
+docs/failure-model.md - Worker crashes. - Database outages. - Lease
+expiration. - Stale workers. - External side-effect ambiguity. -
+Recovery guarantees and known limitations.
+
+docs/benchmark-results.md - Environment and configuration. - Workload
+descriptions. - Commands and raw measurements. - Results and
+interpretation.
+
+docs/decisions/ - Why PostgreSQL is the initial durable queue. - Why
+lease-based claiming is used. - Why the engine does not claim
+exactly-once side effects. - Why additional infrastructure was or was
+not introduced.
+
+======================================================================
+22. RESUME POSITIONING
+======================================================================
+
+Use a project name that describes the system, not a grandiose claim.
+
+Example resume entry before measured results exist:
+
+FlowForge - Distributed Workflow Engine | Go, PostgreSQL,
+OpenTelemetry - Built a durable workflow engine for dependency-aware
+task execution across independent workers, with transactional task
+claiming and persisted state. - Implemented retry scheduling, worker
+heartbeats, lease-expiration recovery, idempotent run submission, and
+per-attempt execution history. - Added concurrency and failure-injection
+tests for worker crashes, duplicate submissions, transient failures, and
+stale-worker result writes.
+
+After benchmarking, replace or supplement a bullet with verified
+measurements, for example: - Benchmarked [N] tasks across [W] workers at
+[measured throughput], with [measured p95 queue latency] under
+[specified workload and environment].
+
+The bracketed fields are placeholders. Never claim a result until it has
+been measured and can be reproduced.
+
+Interview topics this project can support: - How do you claim a task
+without two workers owning it simultaneously? - What happens if a worker
+dies after performing a side effect? - Why are leases not sufficient to
+guarantee exactly-once execution? - How do you prevent retry storms? -
+How would you scale the scheduler? - What happens if PostgreSQL becomes
+unavailable? - How would you handle a workflow with a million tasks? -
+How would you implement tenant isolation and fairness? - What are the
+trade-offs between polling and database notifications? - How would you
+test a distributed system whose failures are nondeterministic?
+
+======================================================================
+23. ACCEPTANCE CHECKLIST
+======================================================================
+
+Core functionality: [ ] Workflow definitions are versioned and
+validated. [ ] Dependency cycles are rejected. [ ] Workflow runs and
+task state are persisted. [ ] Multiple independent workers can execute
+tasks. [ ] Tasks run only after dependencies succeed. [ ] Retry policy
+is bounded and configurable. [ ] Expired leases are recovered. [ ]
+Repeated submission with the same idempotency key is safe. [ ] Stale
+workers cannot overwrite accepted results. [ ] Cancellation semantics
+are documented and tested. [ ] Task attempts and errors are inspectable.
+
+Engineering quality: [ ] Unit, integration, concurrency, and failure
+tests exist. [ ] Database migrations are versioned. [ ] CI runs tests
+and static checks. [ ] Logs are structured. [ ] Metrics cover queue
+depth, latency, retries, and failures. [ ] API input validation and
+access controls exist. [ ] README setup instructions work from a clean
+checkout. [ ] Benchmarks can be reproduced. [ ] Architecture and failure
+guarantees are documented. [ ] Known limitations are stated honestly.
+
+Portfolio presentation: [ ] Architecture diagram. [ ] State-machine
+diagram. [ ] Example workflow JSON. [ ] Demo recording or live local
+demo. [ ] Benchmark report with actual results. [ ] Clear commit history
+and meaningful pull requests/issues. [ ] No secrets, tokens, or private
+data in the repository.
+
+======================================================================
+24. FINAL BUILD STRATEGY
+======================================================================
+
+Build in this order:
+
+1.  Make one workflow run correctly in a single process.
+2.  Persist every important state transition.
+3.  Add independent workers and transactional task claiming.
+4.  Implement leases, heartbeats, and recovery.
+5.  Add bounded retries and idempotency.
+6.  Test failure cases before adding a dashboard.
+7.  Instrument the system and measure its behavior.
+8.  Optimize based on measured bottlenecks.
+9.  Publish the architecture, guarantees, and limitations.
+10. Add optional infrastructure only when the design needs it.
+
+The strongest version of this project is not the one with the longest
+technology list. It is the one where you can explain the failure model,
+demonstrate recovery, defend the consistency decisions, reproduce the
+benchmarks, and show that the tests catch real bugs.
+
+End of specification.

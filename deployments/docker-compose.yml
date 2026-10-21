@@ -1,0 +1,74 @@
+# Local development stack for FlowForge.
+#
+#   docker compose -f deployments/docker-compose.yml up -d postgres
+#
+# starts only PostgreSQL (enough for tests and for running the processes from
+# a local virtualenv). `--profile app up` additionally builds and runs the API,
+# scheduler and two workers in containers.
+name: flowforge
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: flowforge
+      POSTGRES_PASSWORD: flowforge
+      POSTGRES_DB: flowforge
+    ports:
+      - "${FLOWFORGE_PG_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    command: ["postgres", "-c", "max_connections=300"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flowforge -d flowforge"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    profiles: ["app"]
+    build: { context: .., dockerfile: deployments/Dockerfile }
+    env_file: ../.env.example
+    environment:
+      FLOWFORGE_DATABASE_URL: postgresql+asyncpg://flowforge:flowforge@postgres:5432/flowforge
+    command: ["flowforge", "migrate"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  api:
+    profiles: ["app"]
+    build: { context: .., dockerfile: deployments/Dockerfile }
+    env_file: ../.env.example
+    environment:
+      FLOWFORGE_DATABASE_URL: postgresql+asyncpg://flowforge:flowforge@postgres:5432/flowforge
+    command: ["flowforge", "api", "--host", "0.0.0.0", "--port", "8000"]
+    ports: ["8000:8000"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  scheduler:
+    profiles: ["app"]
+    build: { context: .., dockerfile: deployments/Dockerfile }
+    env_file: ../.env.example
+    environment:
+      FLOWFORGE_DATABASE_URL: postgresql+asyncpg://flowforge:flowforge@postgres:5432/flowforge
+      FLOWFORGE_METRICS_PORT: "9101"
+    command: ["flowforge", "scheduler"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  worker:
+    profiles: ["app"]
+    build: { context: .., dockerfile: deployments/Dockerfile }
+    env_file: ../.env.example
+    environment:
+      FLOWFORGE_DATABASE_URL: postgresql+asyncpg://flowforge:flowforge@postgres:5432/flowforge
+      FLOWFORGE_METRICS_PORT: "9102"
+    command: ["flowforge", "worker", "--concurrency", "4"]
+    deploy:
+      replicas: 2
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+volumes:
+  pgdata:

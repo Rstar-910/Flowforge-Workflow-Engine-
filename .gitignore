@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+.venv/
+# Local configuration and secrets (only the example is committed)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+*.egg-info/
+dist/
+build/
+.DS_Store
+benchmarks/results/*.tmp
+benchmarks/results/logs/
+
+# Local run output (logs contain hostnames; ledger is demo data)
+.local-logs/
+*.log

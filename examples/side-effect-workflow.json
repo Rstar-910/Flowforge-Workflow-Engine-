@@ -1,0 +1,10 @@
+{
+  "name": "charge-customer",
+  "version": 1,
+  "description": "Simulated external side effect de-duplicated on the engine's operation key",
+  "tasks": [
+    {"id": "charge", "handler": "record_effect",
+     "input": {"amount": 42, "use_operation_key": true},
+     "retry": {"max_attempts": 5, "initial_delay_seconds": 1, "max_delay_seconds": 10}}
+  ]
+}

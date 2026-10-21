@@ -1,0 +1,43 @@
+  "timestamp": "2026-10-21T12:37:17.109356+00:00",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "cpu": "Apple A18 Pro",
+  "cpu_count": 6,
+  "python": "3.12.13",
+  "postgres": "postgres (PostgreSQL) 17.11",
+  "database_url_host": "localhost",
+  "git_commit": null
+}
+  submission trial 0: 291 runs/s, p95 82.3 ms, errors 0
+  submission trial 1: 170 runs/s, p95 259.6 ms, errors 0
+  submission trial 2: 243 runs/s, p95 98.4 ms, errors 0
+  linear10 w=1x4 trial 0: 194 tasks/s, queue p95 951 ms
+  linear10 w=1x4 trial 1: 225 tasks/s, queue p95 629 ms
+  linear10 w=1x4 trial 2: 169 tasks/s, queue p95 1484 ms
+  linear10 w=2x4 trial 0: 102 tasks/s, queue p95 1716 ms
+  linear10 w=2x4 trial 1: 209 tasks/s, queue p95 546 ms
+  linear10 w=2x4 trial 2: 260 tasks/s, queue p95 484 ms
+  linear10 w=4x4 trial 0: 306 tasks/s, queue p95 414 ms
+  linear10 w=4x4 trial 1: 353 tasks/s, queue p95 301 ms
+  linear10 w=4x4 trial 2: 303 tasks/s, queue p95 302 ms
+  wide50 w=1x8 trial 0: 158 tasks/s, queue p95 6080 ms
+  wide50 w=1x8 trial 1: 72 tasks/s, queue p95 11601 ms
+  wide50 w=1x8 trial 2: 173 tasks/s, queue p95 5197 ms
+  wide50 w=2x8 trial 0: 199 tasks/s, queue p95 3976 ms
+  wide50 w=2x8 trial 1: 198 tasks/s, queue p95 4702 ms
+  wide50 w=2x8 trial 2: 206 tasks/s, queue p95 3647 ms
+  wide50 w=4x8 trial 0: 177 tasks/s, queue p95 5090 ms
+  wide50 w=4x8 trial 1: 152 tasks/s, queue p95 5820 ms
+  wide50 w=4x8 trial 2: 100 tasks/s, queue p95 7579 ms
+  mixed20 w=4x4 trial 0: 167 tasks/s, queue p95 2636 ms
+  mixed20 w=4x4 trial 1: 171 tasks/s, queue p95 2075 ms
+  mixed20 w=4x4 trial 2: 230 tasks/s, queue p95 1419 ms
+  flaky_p0.3 w=4x4 trial 0: 122 tasks/s, queue p95 3738 ms
+  flaky_p0.3 w=4x4 trial 1: 129 tasks/s, queue p95 3500 ms
+  flaky_p0.3 w=4x4 trial 2: 99 tasks/s, queue p95 4208 ms
+  crash recovery trial 0: max 6.43s (lease 5.0s)
+
+# NOTE: baseline implementation (before the round-trip optimisation described in
+# docs/benchmark-results.md). The run aborted in the crash-recovery scenario because of a
+# benchmark-script bug (the definition was truncated between trials), so no JSON was written;
+# the per-trial console lines above are the complete record of this baseline run.

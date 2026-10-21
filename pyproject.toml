@@ -1,0 +1,95 @@
+[project]
+name = "flowforge"
+version = "0.1.0"
+description = "FlowForge: a durable, PostgreSQL-backed distributed workflow engine"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "sqlalchemy[asyncio]>=2.0.32",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+    "prometheus-client>=0.20",
+    "opentelemetry-api>=1.26",
+]
+
+[project.optional-dependencies]
+otel = [
+    "opentelemetry-sdk>=1.26",
+    "opentelemetry-exporter-otlp-proto-http>=1.26",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-timeout>=2.3",
+    "hypothesis>=6.112",
+    "httpx>=0.27",
+    "ruff>=0.6",
+    "mypy>=1.11",
+]
+
+[project.scripts]
+flowforge = "flowforge.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/flowforge"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+timeout = 120
+markers = [
+    "integration: requires PostgreSQL",
+    "process: spawns real worker/scheduler/API processes",
+    "slow: long-running tests",
+]
+addopts = "-ra --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "ASYNC", "S", "SIM", "RUF", "PL"]
+ignore = [
+    "PLR0913", # many arguments is normal for repository functions
+    "PLR2004", # magic values in comparisons
+    "PLR0911",
+    "PLR0912",
+    "PLR0915",
+    "S101",    # assert is fine in tests and invariants
+    "S311",    # random is used for jitter, not cryptography
+    "RUF012",
+    "PLR0917", # FastAPI route signatures and SQL helpers take many parameters by design
+    "PLC0415", # lazy imports keep CLI subcommands light (worker must not import uvicorn)
+    "ASYNC109", # explicit timeout parameters are part of the executor/test-helper APIs
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "PLC0415", "ASYNC"]
+"scripts/**" = ["S", "PLC0415", "T201"]
+"migrations/**" = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+mypy_path = "src"
+packages = ["flowforge"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["asyncpg.*", "prometheus_client.*"]
+ignore_missing_imports = true
