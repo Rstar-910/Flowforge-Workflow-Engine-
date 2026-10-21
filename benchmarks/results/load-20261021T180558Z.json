@@ -1,0 +1,1644 @@
+{
+  "environment": {
+    "timestamp": "2026-10-21T18:05:58.371523+00:00",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "cpu": "Apple A18 Pro",
+    "cpu_count": 6,
+    "python": "3.12.13",
+    "postgres": "postgres (PostgreSQL) 17.11",
+    "database_url_host": "localhost",
+    "process_env": {
+      "FLOWFORGE_LEASE_SECONDS": "10",
+      "FLOWFORGE_HEARTBEAT_INTERVAL_SECONDS": "3",
+      "FLOWFORGE_WORKER_POLL_INTERVAL_SECONDS": "0.05",
+      "FLOWFORGE_WORKER_MAX_POLL_INTERVAL_SECONDS": "0.25",
+      "FLOWFORGE_SCHEDULER_INTERVAL_SECONDS": "0.25",
+      "FLOWFORGE_WORKER_SHUTDOWN_GRACE_SECONDS": "1",
+      "FLOWFORGE_LOG_LEVEL": "WARNING",
+      "FLOWFORGE_LOG_FORMAT": "json",
+      "FLOWFORGE_API_KEYS": "bench-key:bench:admin",
+      "FLOWFORGE_HANDLER_MODULES": "flowforge.handlers.builtin"
+    },
+    "git_commit": "47afce2"
+  },
+  "config": {
+    "rate_runs_per_s": 50.0,
+    "duration_s": 90.0,
+    "tasks_per_run": 8,
+    "apis": 3,
+    "schedulers": 2,
+    "workers": "6 x 4 slots (+1 replacement)",
+    "env": {
+      "FLOWFORGE_API_KEYS": "load-test-key:load:admin",
+      "FLOWFORGE_HANDLER_MODULES": "flowforge.handlers.builtin",
+      "FLOWFORGE_LEASE_SECONDS": "10",
+      "FLOWFORGE_HEARTBEAT_INTERVAL_SECONDS": "3",
+      "FLOWFORGE_WORKER_POLL_INTERVAL_SECONDS": "0.05",
+      "FLOWFORGE_WORKER_MAX_POLL_INTERVAL_SECONDS": "0.25",
+      "FLOWFORGE_SCHEDULER_INTERVAL_SECONDS": "0.5",
+      "FLOWFORGE_WORKER_SHUTDOWN_GRACE_SECONDS": "2",
+      "FLOWFORGE_LOG_LEVEL": "WARNING"
+    }
+  },
+  "events": [
+    {
+      "t": 38.6,
+      "event": "SIGKILL worker-1",
+      "inflight_tasks": 4
+    },
+    {
+      "t": 51.4,
+      "event": "start worker-7"
+    },
+    {
+      "t": 64.3,
+      "event": "SIGKILL scheduler-1"
+    },
+    {
+      "t": 72.9,
+      "event": "SIGKILL api-1"
+    },
+    {
+      "t": 90.0,
+      "event": "stop submitting"
+    },
+    {
+      "t": 91.0,
+      "event": "drained"
+    }
+  ],
+  "submissions": {
+    "sent": 4500,
+    "http_status": {
+      "201": 4500
+    },
+    "accepted": 4500,
+    "distinct_runs": 4500,
+    "with_failover": 429,
+    "lost": 0
+  },
+  "runs_in_db": 4500,
+  "run_status": {
+    "SUCCEEDED": 4500
+  },
+  "duplicate_accepted_successes": 0,
+  "invariant_violations": {},
+  "attempt_outcomes": {
+    "LEASE_EXPIRED": 3,
+    "SUCCEEDED": 36000
+  },
+  "crash_recovery": {
+    "inflight_on_killed_worker": 4,
+    "recovered": 3,
+    "seconds": {
+      "n": 3,
+      "p50": 11.167267,
+      "p95": 11.312049100000001,
+      "p99": 11.32491862,
+      "max": 11.328136
+    }
+  },
+  "phases": [
+    {
+      "phase": "warm-up",
+      "runs": 643,
+      "tasks_per_s": 399.91869918699183,
+      "submit_ms": {
+        "n": 643,
+        "p50": 12.475875002564862,
+        "p95": 31.963866413570937,
+        "p99": 92.97858372214266,
+        "max": 110.43845899985172
+      },
+      "queue_wait_ms": {
+        "n": 5130,
+        "p50": 3.0,
+        "p95": 12.0,
+        "p99": 29.710000000000036,
+        "max": 51
+      },
+      "run_e2e_ms": {
+        "n": 643,
+        "p50": 85.31700000000001,
+        "p95": 173.7444999999999,
+        "p99": 286.72112000000027,
+        "max": 342.07300000000004
+      },
+      "queue_age_s_max": 0.013384,
+      "queue_age_s_p95": 0.010124200000000002,
+      "ready_depth_max": 3.0,
+      "lock_waiting_sessions_mean": 0.24,
+      "lock_waiting_sessions_max": 2,
+      "lock_wait_sample_share": 0.192
+    },
+    {
+      "phase": "steady",
+      "runs": 1286,
+      "tasks_per_s": 398.4,
+      "submit_ms": {
+        "n": 1286,
+        "p50": 18.523292004829273,
+        "p95": 42.788968996319454,
+        "p99": 57.547112558677334,
+        "max": 90.57891697739251
+      },
+      "queue_wait_ms": {
+        "n": 10249,
+        "p50": 6.0,
+        "p95": 16.0,
+        "p99": 25.0,
+        "max": 77
+      },
+      "run_e2e_ms": {
+        "n": 1286,
+        "p50": 123.046,
+        "p95": 261.29825,
+        "p99": 298.9758500000002,
+        "max": 12368.423
+      },
+      "queue_age_s_max": 0.053377,
+      "queue_age_s_p95": 0.0192608,
+      "ready_depth_max": 11.0,
+      "lock_waiting_sessions_mean": 0.6275303643724697,
+      "lock_waiting_sessions_max": 4,
+      "lock_wait_sample_share": 0.4251012145748988
+    },
+    {
+      "phase": "worker crash + replacement",
+      "runs": 1286,
+      "tasks_per_s": 402.4066390041493,
+      "submit_ms": {
+        "n": 1286,
+        "p50": 38.91335400112439,
+        "p95": 88.8308332359884,
+        "p99": 178.34231425804347,
+        "max": 297.2332499921322
+      },
+      "queue_wait_ms": {
+        "n": 10324,
+        "p50": 182.0,
+        "p95": 708.0,
+        "p99": 762.7700000000004,
+        "max": 821
+      },
+      "run_e2e_ms": {
+        "n": 1286,
+        "p50": 1115.499,
+        "p95": 3574.58025,
+        "p99": 3655.2008,
+        "max": 3716.26
+      },
+      "queue_age_s_max": 0.759148,
+      "queue_age_s_p95": 0.7259732999999999,
+      "ready_depth_max": 286.0,
+      "lock_waiting_sessions_mean": 1.327659574468085,
+      "lock_waiting_sessions_max": 6,
+      "lock_wait_sample_share": 0.7191489361702128
+    },
+    {
+      "phase": "scheduler + API crash",
+      "runs": 1285,
+      "tasks_per_s": 399.9203187250995,
+      "submit_ms": {
+        "n": 1285,
+        "p50": 15.847959002712741,
+        "p95": 42.89415000821463,
+        "p99": 65.23213384090928,
+        "max": 97.9278750019148
+      },
+      "queue_wait_ms": {
+        "n": 10283,
+        "p50": 4.0,
+        "p95": 12.0,
+        "p99": 22.0,
+        "max": 69
+      },
+      "run_e2e_ms": {
+        "n": 1285,
+        "p50": 93.421,
+        "p95": 186.2034,
+        "p99": 254.34120000000013,
+        "max": 300.786
+      },
+      "queue_age_s_max": 0.020138,
+      "queue_age_s_p95": 0.014220400000000005,
+      "ready_depth_max": 5.0,
+      "lock_waiting_sessions_mean": 0.32926829268292684,
+      "lock_waiting_sessions_max": 7,
+      "lock_wait_sample_share": 0.23577235772357724
+    }
+  ],
+  "lock_waits_by_statement": {
+    "run lock (progression)": 509,
+    "fenced completion": 60,
+    "UPDATE tasks t SET lease_expires_at = s": 7,
+    "claim": 1,
+    "COMMIT;": 1
+  },
+  "lock_samples": 862,
+  "db_connections_max": {
+    "ff-api": 14,
+    "ff-observer": 2,
+    "ff-scheduler": 2,
+    "ff-worker": 30,
+    "other": 1
+  },
+  "deadlocks": 0.0,
+  "timeseries": [
+    {
+      "t": 0.0,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 0.0,
+      "retry_wait": 0.0,
+      "succeeded": 0.0,
+      "active_runs": 0.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 3,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 6
+      }
+    },
+    {
+      "t": 1.1,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 415.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 2.1,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 823.0,
+      "active_runs": 3.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 3.1,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 1230.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 4.1,
+      "ready": 3.0,
+      "queue_age_s": 0.001201,
+      "running": 6.0,
+      "retry_wait": 0.0,
+      "succeeded": 1635.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 5.2,
+      "ready": 3.0,
+      "queue_age_s": 0.001896,
+      "running": 6.0,
+      "retry_wait": 0.0,
+      "succeeded": 2043.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 6.2,
+      "ready": 3.0,
+      "queue_age_s": 0.005337,
+      "running": 6.0,
+      "retry_wait": 0.0,
+      "succeeded": 2454.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 7.2,
+      "ready": 1.0,
+      "queue_age_s": 0.004136,
+      "running": 6.0,
+      "retry_wait": 0.0,
+      "succeeded": 2872.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 8.2,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 7.0,
+      "retry_wait": 0.0,
+      "succeeded": 3280.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 9.3,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 3686.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 10.3,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 4095.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 11.3,
+      "ready": 2.0,
+      "queue_age_s": 0.007951,
+      "running": 6.0,
+      "retry_wait": 0.0,
+      "succeeded": 4505.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 12.3,
+      "ready": 3.0,
+      "queue_age_s": 0.013384,
+      "running": 5.0,
+      "retry_wait": 0.0,
+      "succeeded": 4919.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 13.4,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 5329.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 14.4,
+      "ready": 2.0,
+      "queue_age_s": 0.004042,
+      "running": 7.0,
+      "retry_wait": 0.0,
+      "succeeded": 5738.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 24
+      }
+    },
+    {
+      "t": 15.4,
+      "ready": 2.0,
+      "queue_age_s": 0.006112,
+      "running": 6.0,
+      "retry_wait": 0.0,
+      "succeeded": 6153.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 16.5,
+      "ready": 1.0,
+      "queue_age_s": 0.00301,
+      "running": 7.0,
+      "retry_wait": 0.0,
+      "succeeded": 6561.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 17.5,
+      "ready": 2.0,
+      "queue_age_s": 0.007875,
+      "running": 9.0,
+      "retry_wait": 0.0,
+      "succeeded": 6971.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 18.5,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 12.0,
+      "retry_wait": 0.0,
+      "succeeded": 7379.0,
+      "active_runs": 6.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 19.5,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 10.0,
+      "retry_wait": 0.0,
+      "succeeded": 7794.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 20.6,
+      "ready": 3.0,
+      "queue_age_s": 0.009488,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 8204.0,
+      "active_runs": 6.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 21.6,
+      "ready": 1.0,
+      "queue_age_s": 0.006169,
+      "running": 7.0,
+      "retry_wait": 0.0,
+      "succeeded": 8617.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 22.6,
+      "ready": 2.0,
+      "queue_age_s": 0.005372,
+      "running": 9.0,
+      "retry_wait": 0.0,
+      "succeeded": 9026.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 23.7,
+      "ready": 3.0,
+      "queue_age_s": 0.007627,
+      "running": 7.0,
+      "retry_wait": 0.0,
+      "succeeded": 9442.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 24.7,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 10.0,
+      "retry_wait": 0.0,
+      "succeeded": 9853.0,
+      "active_runs": 6.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 25.7,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 11.0,
+      "retry_wait": 0.0,
+      "succeeded": 10272.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 26.8,
+      "ready": 3.0,
+      "queue_age_s": 0.013446,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 10677.0,
+      "active_runs": 7.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 27.8,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 10.0,
+      "retry_wait": 0.0,
+      "succeeded": 11101.0,
+      "active_runs": 6.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 28.9,
+      "ready": 5.0,
+      "queue_age_s": 0.00995,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 11519.0,
+      "active_runs": 7.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 29.9,
+      "ready": 1.0,
+      "queue_age_s": 0.005512,
+      "running": 9.0,
+      "retry_wait": 0.0,
+      "succeeded": 11942.0,
+      "active_runs": 6.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 31.0,
+      "ready": 5.0,
+      "queue_age_s": 0.011016,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 12357.0,
+      "active_runs": 7.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 32.0,
+      "ready": 5.0,
+      "queue_age_s": 0.011681,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 12773.0,
+      "active_runs": 7.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 33.1,
+      "ready": 7.0,
+      "queue_age_s": 0.011613,
+      "running": 6.0,
+      "retry_wait": 0.0,
+      "succeeded": 13191.0,
+      "active_runs": 7.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 26
+      }
+    },
+    {
+      "t": 34.1,
+      "ready": 6.0,
+      "queue_age_s": 0.012136,
+      "running": 11.0,
+      "retry_wait": 0.0,
+      "succeeded": 13601.0,
+      "active_runs": 8.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 26
+      }
+    },
+    {
+      "t": 35.1,
+      "ready": 3.0,
+      "queue_age_s": 0.014201,
+      "running": 12.0,
+      "retry_wait": 0.0,
+      "succeeded": 14017.0,
+      "active_runs": 9.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 26
+      }
+    },
+    {
+      "t": 36.2,
+      "ready": 1.0,
+      "queue_age_s": 0.016912,
+      "running": 14.0,
+      "retry_wait": 0.0,
+      "succeeded": 14432.0,
+      "active_runs": 9.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 26
+      }
+    },
+    {
+      "t": 37.3,
+      "ready": 11.0,
+      "queue_age_s": 0.053377,
+      "running": 13.0,
+      "retry_wait": 0.0,
+      "succeeded": 14835.0,
+      "active_runs": 14.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 26
+      }
+    },
+    {
+      "t": 38.4,
+      "ready": 3.0,
+      "queue_age_s": 0.019848,
+      "running": 18.0,
+      "retry_wait": 0.0,
+      "succeeded": 15289.0,
+      "active_runs": 13.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 1,
+        "ff-scheduler": 2,
+        "ff-worker": 26
+      }
+    },
+    {
+      "t": 39.5,
+      "ready": 2.0,
+      "queue_age_s": 0.019545,
+      "running": 19.0,
+      "retry_wait": 0.0,
+      "succeeded": 15719.0,
+      "active_runs": 14.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 40.5,
+      "ready": 3.0,
+      "queue_age_s": 0.016364,
+      "running": 18.0,
+      "retry_wait": 0.0,
+      "succeeded": 16153.0,
+      "active_runs": 12.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 41.6,
+      "ready": 2.0,
+      "queue_age_s": 0.015204,
+      "running": 16.0,
+      "retry_wait": 0.0,
+      "succeeded": 16576.0,
+      "active_runs": 12.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 42.6,
+      "ready": 6.0,
+      "queue_age_s": 0.010768,
+      "running": 14.0,
+      "retry_wait": 0.0,
+      "succeeded": 16996.0,
+      "active_runs": 13.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 43.7,
+      "ready": 3.0,
+      "queue_age_s": 0.01815,
+      "running": 14.0,
+      "retry_wait": 0.0,
+      "succeeded": 17432.0,
+      "active_runs": 12.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 44.8,
+      "ready": 9.0,
+      "queue_age_s": 0.023148,
+      "running": 20.0,
+      "retry_wait": 0.0,
+      "succeeded": 17836.0,
+      "active_runs": 18.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 45.9,
+      "ready": 11.0,
+      "queue_age_s": 0.045237,
+      "running": 20.0,
+      "retry_wait": 0.0,
+      "succeeded": 18266.0,
+      "active_runs": 19.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 47.0,
+      "ready": 30.0,
+      "queue_age_s": 0.085567,
+      "running": 13.0,
+      "retry_wait": 0.0,
+      "succeeded": 18657.0,
+      "active_runs": 28.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 6,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 48.1,
+      "ready": 50.0,
+      "queue_age_s": 0.158151,
+      "running": 18.0,
+      "retry_wait": 0.0,
+      "succeeded": 19019.0,
+      "active_runs": 42.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 7,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 49.2,
+      "ready": 72.0,
+      "queue_age_s": 0.228152,
+      "running": 9.0,
+      "retry_wait": 3.0,
+      "succeeded": 19405.0,
+      "active_runs": 54.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 7,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 50.2,
+      "ready": 88.0,
+      "queue_age_s": 0.2509,
+      "running": 13.0,
+      "retry_wait": 0.0,
+      "succeeded": 19790.0,
+      "active_runs": 65.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 7,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 51.3,
+      "ready": 96.0,
+      "queue_age_s": 0.301489,
+      "running": 15.0,
+      "retry_wait": 0.0,
+      "succeeded": 20174.0,
+      "active_runs": 72.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 7,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 25
+      }
+    },
+    {
+      "t": 52.4,
+      "ready": 146.0,
+      "queue_age_s": 0.409757,
+      "running": 9.0,
+      "retry_wait": 0.0,
+      "succeeded": 20497.0,
+      "active_runs": 92.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 7,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 29
+      }
+    },
+    {
+      "t": 53.7,
+      "ready": 205.0,
+      "queue_age_s": 0.730744,
+      "running": 14.0,
+      "retry_wait": 0.0,
+      "succeeded": 20774.0,
+      "active_runs": 130.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 29
+      }
+    },
+    {
+      "t": 54.8,
+      "ready": 230.0,
+      "queue_age_s": 0.59626,
+      "running": 15.0,
+      "retry_wait": 0.0,
+      "succeeded": 21185.0,
+      "active_runs": 154.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 29
+      }
+    },
+    {
+      "t": 55.9,
+      "ready": 258.0,
+      "queue_age_s": 0.653894,
+      "running": 16.0,
+      "retry_wait": 0.0,
+      "succeeded": 21606.0,
+      "active_runs": 173.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 57.1,
+      "ready": 249.0,
+      "queue_age_s": 0.759148,
+      "running": 16.0,
+      "retry_wait": 0.0,
+      "succeeded": 22010.0,
+      "active_runs": 170.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 58.2,
+      "ready": 286.0,
+      "queue_age_s": 0.680621,
+      "running": 12.0,
+      "retry_wait": 0.0,
+      "succeeded": 22424.0,
+      "active_runs": 177.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 59.3,
+      "ready": 276.0,
+      "queue_age_s": 0.683037,
+      "running": 22.0,
+      "retry_wait": 0.0,
+      "succeeded": 22853.0,
+      "active_runs": 182.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 30,
+        "other": 1
+      }
+    },
+    {
+      "t": 60.4,
+      "ready": 231.0,
+      "queue_age_s": 0.441852,
+      "running": 20.0,
+      "retry_wait": 0.0,
+      "succeeded": 23486.0,
+      "active_runs": 158.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 30,
+        "other": 1
+      }
+    },
+    {
+      "t": 61.4,
+      "ready": 154.0,
+      "queue_age_s": 0.306117,
+      "running": 15.0,
+      "retry_wait": 0.0,
+      "succeeded": 24135.0,
+      "active_runs": 104.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 62.5,
+      "ready": 50.0,
+      "queue_age_s": 0.088774,
+      "running": 19.0,
+      "retry_wait": 0.0,
+      "succeeded": 24834.0,
+      "active_runs": 42.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 63.6,
+      "ready": 2.0,
+      "queue_age_s": 0.007417,
+      "running": 6.0,
+      "retry_wait": 0.0,
+      "succeeded": 25417.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 2,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 64.6,
+      "ready": 1.0,
+      "queue_age_s": 0.007527,
+      "running": 10.0,
+      "retry_wait": 0.0,
+      "succeeded": 25824.0,
+      "active_runs": 6.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 65.7,
+      "ready": 1.0,
+      "queue_age_s": 0.002481,
+      "running": 7.0,
+      "retry_wait": 0.0,
+      "succeeded": 26249.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 66.7,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 9.0,
+      "retry_wait": 0.0,
+      "succeeded": 26662.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 67.8,
+      "ready": 1.0,
+      "queue_age_s": 0.007517,
+      "running": 7.0,
+      "retry_wait": 0.0,
+      "succeeded": 27080.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 68.8,
+      "ready": 1.0,
+      "queue_age_s": 0.001527,
+      "running": 7.0,
+      "retry_wait": 0.0,
+      "succeeded": 27495.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 69.8,
+      "ready": 1.0,
+      "queue_age_s": 0.00631,
+      "running": 9.0,
+      "retry_wait": 0.0,
+      "succeeded": 27908.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 70.9,
+      "ready": 1.0,
+      "queue_age_s": 0.020138,
+      "running": 17.0,
+      "retry_wait": 0.0,
+      "succeeded": 28284.0,
+      "active_runs": 10.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 72.0,
+      "ready": 5.0,
+      "queue_age_s": 0.015693,
+      "running": 17.0,
+      "retry_wait": 0.0,
+      "succeeded": 28736.0,
+      "active_runs": 13.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 14,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 73.0,
+      "ready": 1.0,
+      "queue_age_s": 0.005142,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 29199.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 74.1,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 9.0,
+      "retry_wait": 0.0,
+      "succeeded": 29613.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 75.1,
+      "ready": 3.0,
+      "queue_age_s": 0.008322,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 30027.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 76.2,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 9.0,
+      "retry_wait": 0.0,
+      "succeeded": 30445.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 77.2,
+      "ready": 4.0,
+      "queue_age_s": 0.004069,
+      "running": 6.0,
+      "retry_wait": 0.0,
+      "succeeded": 30860.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 78.2,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 31273.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 79.3,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 6.0,
+      "retry_wait": 0.0,
+      "succeeded": 31690.0,
+      "active_runs": 3.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 80.3,
+      "ready": 1.0,
+      "queue_age_s": 0.001872,
+      "running": 7.0,
+      "retry_wait": 0.0,
+      "succeeded": 32103.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 81.3,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 32519.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 82.4,
+      "ready": 4.0,
+      "queue_age_s": 0.00833,
+      "running": 4.0,
+      "retry_wait": 0.0,
+      "succeeded": 32935.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 83.4,
+      "ready": 3.0,
+      "queue_age_s": 0.002786,
+      "running": 7.0,
+      "retry_wait": 0.0,
+      "succeeded": 33348.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 84.5,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 8.0,
+      "retry_wait": 0.0,
+      "succeeded": 33775.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 85.5,
+      "ready": 1.0,
+      "queue_age_s": 0.001647,
+      "running": 6.0,
+      "retry_wait": 0.0,
+      "succeeded": 34192.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 86.6,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 7.0,
+      "retry_wait": 0.0,
+      "succeeded": 34609.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 87.6,
+      "ready": 1.0,
+      "queue_age_s": 0.005327,
+      "running": 7.0,
+      "retry_wait": 0.0,
+      "succeeded": 35027.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 88.7,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 9.0,
+      "retry_wait": 0.0,
+      "succeeded": 35442.0,
+      "active_runs": 5.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 89.7,
+      "ready": 2.0,
+      "queue_age_s": 0.007841,
+      "running": 6.0,
+      "retry_wait": 0.0,
+      "succeeded": 35862.0,
+      "active_runs": 4.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    },
+    {
+      "t": 90.8,
+      "ready": 0.0,
+      "queue_age_s": 0.0,
+      "running": 0.0,
+      "retry_wait": 0.0,
+      "succeeded": 36000.0,
+      "active_runs": 0.0,
+      "deadlocks": 0.0,
+      "connections": {
+        "ff-api": 8,
+        "ff-observer": 2,
+        "ff-scheduler": 1,
+        "ff-worker": 30
+      }
+    }
+  ]
+}

@@ -65,11 +65,72 @@ interval to 1 s.
 
 Reproduce with `uv run python scripts/benchmark.py`; `--quick` gives a smaller run.
 
-## Results (current implementation)
+## Results (current engine, after ADRs 0015–0016)
+
+Raw data: [`benchmarks/results/20261021T183820Z.json`](../benchmarks/results/20261021T183820Z.json).
+Across all 25 measured workloads, **28,560 of 28,560 tasks succeeded, with 0 failed runs
+and 0 duplicate accepted results.**
+
+| HTTP submission | runs/s | p50 ms | p95 ms | p99 ms | errors |
+|---|---|---|---|---|---|
+| trial 0 (1000 req, 16 parallel) | 302 | 49.5 | 74.0 | 88.2 | 0 |
+| trial 1 (1000 req, 16 parallel) | 272 | 54.0 | 81.8 | 97.7 | 0 |
+| trial 2 (1000 req, 16 parallel) | 281 | 54.4 | 69.2 | 102.8 | 0 |
+
+| workload | workers x slots | trial | tasks | attempts | tasks/s | queue wait p50/p95/p99 ms | exec p50/p95/p99 ms | run e2e p50/p95 ms | dup results |
+|---|---|---|---|---|---|---|---|---|---|
+| linear10 | 1x4 | 0 | 1000 | 1000 | 435 | 187/315/343 | 0/0/0 | 2114/2160 | 0 |
+| linear10 | 1x4 | 1 | 1000 | 1000 | 481 | 178/215/220 | 0/0/0 | 1864/1905 | 0 |
+| linear10 | 1x4 | 2 | 1000 | 1000 | 427 | 203/266/275 | 0/0/0 | 2147/2190 | 0 |
+| linear10 | 2x4 | 0 | 1000 | 1000 | 606 | 128/161/194 | 0/0/1 | 1357/1438 | 0 |
+| linear10 | 2x4 | 1 | 1000 | 1000 | 571 | 140/201/217 | 0/0/0 | 1584/1607 | 0 |
+| linear10 | 2x4 | 2 | 1000 | 1000 | 635 | 129/149/153 | 0/0/0 | 1377/1396 | 0 |
+| linear10 | 4x4 | 0 | 1000 | 1000 | 590 | 124/248/255 | 0/1/1 | 1483/1507 | 0 |
+| linear10 | 4x4 | 1 | 1000 | 1000 | 688 | 114/148/152 | 0/0/1 | 1294/1321 | 0 |
+| linear10 | 4x4 | 2 | 1000 | 1000 | 691 | 113/134/138 | 0/1/1 | 1271/1290 | 0 |
+| wide50 | 1x8 | 0 | 1040 | 1040 | 495 | 919/1770/1844 | 0/0/1 | 2019/2078 | 0 |
+| wide50 | 1x8 | 1 | 1040 | 1040 | 511 | 829/1683/1747 | 0/0/0 | 2002/2019 | 0 |
+| wide50 | 1x8 | 2 | 1040 | 1040 | 516 | 886/1661/1725 | 0/0/1 | 1964/1990 | 0 |
+| wide50 | 2x8 | 0 | 1040 | 1040 | 506 | 976/1714/1777 | 0/0/1 | 2007/2030 | 0 |
+| wide50 | 2x8 | 1 | 1040 | 1040 | 466 | 921/1867/1936 | 0/0/0 | 2169/2219 | 0 |
+| wide50 | 2x8 | 2 | 1040 | 1040 | 576 | 806/1475/1540 | 0/0/1 | 1754/1784 | 0 |
+| wide50 | 4x8 | 0 | 1040 | 1040 | 478 | 854/1855/1923 | 0/0/2 | 2087/2119 | 0 |
+| wide50 | 4x8 | 1 | 1040 | 1040 | 552 | 732/1190/1253 | 0/0/1 | 1780/1805 | 0 |
+| wide50 | 4x8 | 2 | 1040 | 1040 | 421 | 1158/2090/2182 | 0/0/1 | 2360/2398 | 0 |
+| mixed20 | 4x4 | 0 | 2000 | 2000 | 573 | 428/624/640 | 0/1/2 | 3191/3236 | 0 |
+| mixed20 | 4x4 | 1 | 2000 | 2000 | 662 | 381/438/442 | 0/1/1 | 2663/2718 | 0 |
+| mixed20 | 4x4 | 2 | 2000 | 2000 | 615 | 419/607/613 | 0/0/1 | 3020/3051 | 0 |
+| flaky_p0.3 | 4x4 | 0 | 1000 | 1380 | 204 | 706/1584/1648 | 0/0/1 | 2132/2930 | 0 |
+| flaky_p0.3 | 4x4 | 1 | 1000 | 1426 | 181 | 722/1548/1609 | 0/0/1 | 2215/2793 | 0 |
+| flaky_p0.3 | 4x4 | 2 | 1000 | 1414 | 204 | 614/1197/1255 | 0/0/1 | 1916/2942 | 0 |
+
+| crash recovery | lease s | recovery p50 s | max s |
+|---|---|---|---|
+| trial 0 | 5.0 | 6.11 | 6.11 |
+| trial 1 | 5.0 | 6.36 | 6.36 |
+| trial 2 | 5.0 | 6.09 | 6.09 |
+
+Overload: offered 120 tasks/s for 10.0 s; served 57 tasks/s; peak READY depth 604; drained after 21.2 s.
+
+**Why these are lower than the previous results.** Two things changed:
+
+- **ADR 0016** plans the hot statements on every execution. A same-session A/B test put
+  its cost at **5–7% of peak no-op throughput**, in exchange for throughput that holds
+  steady under overload. See `docs/load-test-results.md`.
+- **Session-to-session variance on this laptop.** In the same session, even the variant
+  without custom plans measured 700–738 tasks/s for linear 4 × 4, versus 847–928 in the
+  earlier session.
+
+The earlier results are kept below as history and are not repeated as current claims.
+
+For multi-process, sustained and overload behaviour, with crashes injected during the
+load, see [load-test-results.md](load-test-results.md).
+
+## Earlier results (after ADR 0012, before ADRs 0015–0016)
 
 Raw data: [`benchmarks/results/20261021T144223Z.json`](../benchmarks/results/20261021T144223Z.json).
-This run includes the fixes from ADR 0011 and ADR 0012. The tables are exactly what
-the script printed.
+This run includes ADR 0011 and ADR 0012, but not ADRs 0015–0016. It was measured in an
+earlier session.
 
 | HTTP submission | runs/s | p50 ms | p95 ms | p99 ms | errors |
 |---|---|---|---|---|---|
@@ -127,6 +188,10 @@ Same harness, same machine, same configuration. Each cell lists the 3 trials.
 | flaky_p0.3 | 4x4 | 122 / 129 / 99 | 201 / 257 / 220 | 266 / 345 / 178 |
 | HTTP submission (runs/s) | 1 API process | 291 / 170 / 243 | 257 / 245 / 222 | 288 / 252 / 270 |
 
+After ADRs 0015–0016, in a later session: linear10 4x4 590 / 688 / 691; wide50 4x8
+478 / 552 / 421; mixed20 573 / 662 / 615; flaky 204 / 181 / 204; HTTP 302 / 272 / 281
+runs/s. Custom planning costs about 5–7% (A/B), and the rest is session variance.
+
 Raw data and console logs:
 
 - baseline: `benchmarks/results/20261021-baseline-console.txt`
@@ -152,10 +217,11 @@ The investigation used per-trial table statistics, maintenance modes,
 ## Interpretation
 
 - **Engine overhead dominates.** These are no-op tasks, so tasks/s measures claim,
-  commit, and progression cost. On this single-host setup, linear chains run at
-  847–928 tasks/s with 4 workers × 4 slots. Going from 1 to 4 workers improves
-  throughput by less than 2×, because workers, PostgreSQL, and the benchmark driver
-  all share 6 cores.
+  commit and progression cost. With the current engine, linear chains run at 590–691
+  tasks/s with 4 workers × 4 slots. An earlier session measured 847–928 for the
+  pre-ADR-0016 engine; see the history above for why these differ. Going from 1 to 4
+  workers improves throughput by less than 2×, because workers, PostgreSQL and the
+  benchmark driver all share 6 cores.
 - **Per-run serialisation is now the main cost.** In `mixed20` and `wide50`, the
   largest server-side time is waiting for the run lock: about 2 ms per completion,
   flat across trials (measured with `pg_stat_statements`). This is the designed

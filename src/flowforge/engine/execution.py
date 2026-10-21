@@ -98,8 +98,11 @@ _CLAIM_SQL = text(
         UPDATE workflow_runs r
            SET status = 'RUNNING', started_at = statement_timestamp(),
                updated_at = statement_timestamp()
+         -- Driven by the claimed runs' ids (primary key). A plain IN/join let the
+         -- planner scan every PENDING run instead, a cost that grew with the backlog.
          WHERE r.id IN (SELECT w.id FROM workflow_runs w
-                         WHERE w.id IN (SELECT run_id FROM claimed) AND w.status = 'PENDING'
+                         WHERE w.id = ANY(ARRAY(SELECT run_id FROM claimed))
+                           AND w.status = 'PENDING'
                            FOR NO KEY UPDATE SKIP LOCKED)
         RETURNING r.id
     ), activation_events AS (

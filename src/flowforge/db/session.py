@@ -43,6 +43,12 @@ def create_engine(
     }
     if narrow_lookups_only:
         server_settings["enable_bitmapscan"] = "off"
+        # Plan every execution against the tables' *current* size (ADR 0016). With the
+        # default plan cache, a prepared statement switches to a generic plan after five
+        # executions; one built while the tables were nearly empty kept scanning whole
+        # tables under load until the next autoanalyze (seen: promotion scanning every
+        # BLOCKED task while holding the run lock, claims seq-scanning task_dependencies).
+        server_settings["plan_cache_mode"] = "force_custom_plan"
     engine = create_async_engine(
         settings.database_url.get_secret_value(),
         pool_size=pool_size or settings.db_pool_size,

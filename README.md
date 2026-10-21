@@ -107,6 +107,9 @@ A crashed worker's lease expires. The scheduler records the attempt as `LEASE_EX
   test.
 - [docs/decisions/](docs/decisions/): architecture decision records.
 - [docs/benchmark-results.md](docs/benchmark-results.md): measured results and method.
+- [docs/load-test-results.md](docs/load-test-results.md): sustained load with 3 APIs,
+  2 schedulers and 6 workers, with a worker, a scheduler and an API process killed
+  mid-load; overload behaviour; where the time goes.
 
 ## Quick start
 
@@ -280,24 +283,38 @@ and every process on the same host. Handlers are no-ops, so these numbers measur
 overhead. Full method, per-trial data, and caveats are in
 [docs/benchmark-results.md](docs/benchmark-results.md).
 
-| workload (3 trials each) | workers × slots | tasks/s | queue wait p95 |
+| workload (3 trials each, burst) | workers × slots | tasks/s | queue wait p95 |
 |---|---|---|---|
-| linear chain of 10, 100 runs (burst) | 4 × 4 | 847–928 | 95–109 ms |
-| fan-out of 50 + join, 20 runs (burst) | 4 × 8 | 666–757 | 1.1–1.2 s |
-| random 20-task DAG, 100 runs | 4 × 4 | 729–836 | 0.40–0.50 s |
-| 30 % transient failures with retries | 4 × 4 | 178–345 | 0.83–0.87 s |
+| linear chain of 10, 100 runs | 4 × 4 | 590–691 | 134–248 ms |
+| fan-out of 50 + join, 20 runs | 4 × 8 | 421–552 | 1.2–2.1 s |
+| random 20-task DAG, 100 runs | 4 × 4 | 573–662 | 0.44–0.62 s |
+| 30 % transient failures with retries | 4 × 4 | 181–204 | 1.2–1.6 s |
 
-- HTTP submission, 1 API process with 16 clients and a 20-task definition: 252–288
-  runs/s, with p95 latency of 82–96 ms.
+- HTTP submission, 1 API process with 16 clients and a 20-task definition: 272–302
+  runs/s, with p95 latency of 69–82 ms.
 - Recovery from SIGKILL, from the kill until the task re-executes, with a 5 s lease:
-  6.3 s.
+  6.1–6.4 s.
 - 28,560 of 28,560 tasks succeeded, with 0 duplicate accepted results.
-- Two profiling-driven optimisations made these numbers:
-  - Fewer database round trips (ADR 0011): linear chains went from about 300 to about
-    870 tasks/s.
-  - Query plans that don't depend on planner statistics (ADR 0012): this removed the
-    main cause of a 52% throughput drop across benchmark trials. About ±10% variation
-    between trials remains.
+
+**Sustained multi-process load** (3 APIs, 2 schedulers, 6 workers; a worker, a
+scheduler and an API process each SIGKILLed during the load; details in
+[docs/load-test-results.md](docs/load-test-results.md)):
+
+| offered | result |
+|---|---|
+| 200 tasks/s for 210 s | 42,000 tasks; 0 lost, 0 duplicated, 0 invariant violations; queue wait p95 18 ms, run p95 125 ms; recovery from the worker kill 11.3 s (10 s lease) |
+| 720 tasks/s (overload) | throughput holds at 465–490 tasks/s and the excess queues (queue age max 5.2 s); 0 lost or duplicated |
+
+Profiling under load drove three fixes:
+
+- ADR 0011: fewer database round trips per task.
+- ADR 0012: plans that don't depend on stale planner statistics.
+- ADR 0016: no stale cached plans. This stopped throughput from collapsing under
+  overload, from 527 down to 212 tasks/s before the fix, at a measured cost of 5–7%
+  peak throughput.
+
+All numbers come from one laptop with everything on the same host. Multi-host
+deployments and PostgreSQL failover are untested.
 
 ## Configuration
 

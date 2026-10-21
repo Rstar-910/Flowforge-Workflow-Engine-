@@ -1,0 +1,1175 @@
+{
+  "environment": {
+    "timestamp": "2026-10-21T18:31:54.762015+00:00",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "cpu": "Apple A18 Pro",
+    "cpu_count": 6,
+    "python": "3.12.13",
+    "postgres": "postgres (PostgreSQL) 17.11",
+    "database_url_host": "localhost",
+    "process_env": {
+      "FLOWFORGE_LEASE_SECONDS": "10",
+      "FLOWFORGE_HEARTBEAT_INTERVAL_SECONDS": "3",
+      "FLOWFORGE_WORKER_POLL_INTERVAL_SECONDS": "0.05",
+      "FLOWFORGE_WORKER_MAX_POLL_INTERVAL_SECONDS": "0.25",
+      "FLOWFORGE_SCHEDULER_INTERVAL_SECONDS": "0.25",
+      "FLOWFORGE_WORKER_SHUTDOWN_GRACE_SECONDS": "1",
+      "FLOWFORGE_LOG_LEVEL": "WARNING",
+      "FLOWFORGE_LOG_FORMAT": "json",
+      "FLOWFORGE_API_KEYS": "bench-key:bench:admin",
+      "FLOWFORGE_HANDLER_MODULES": "flowforge.handlers.builtin"
+    },
+    "git_commit": "47afce2"
+  },
+  "results": [
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.819919,
+      "tasks_per_second": 549.4750041073256,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 159.0,
+        "p95": 189.0,
+        "p99": 193.0,
+        "max": 195.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 0.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 1638.726,
+        "p95": 1660.3538,
+        "p99": 1664.54762,
+        "max": 1664.807
+      },
+      "top_statements": [],
+      "scenario": "linear10",
+      "workers": 1,
+      "concurrency": 4,
+      "trial": 0,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 16384,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 122880,
+          "index_bytes": 98304
+        },
+        "task_attempts": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 73728,
+          "index_bytes": 49152
+        },
+        "task_dependencies": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 8192,
+          "index_bytes": 32768
+        },
+        "task_events": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 106496,
+          "index_bytes": 73728
+        }
+      }
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.877386,
+      "tasks_per_second": 532.6555114398424,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 163.0,
+        "p95": 188.04999999999995,
+        "p99": 205.0,
+        "max": 207.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 0.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 1695.4185,
+        "p95": 1729.8421500000002,
+        "p99": 1734.14072,
+        "max": 1734.212
+      },
+      "top_statements": [],
+      "scenario": "linear10",
+      "workers": 1,
+      "concurrency": 4,
+      "trial": 1,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 110,
+          "n_dead_tup": 135,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 114688,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 1100,
+          "n_dead_tup": 2898,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 573440,
+          "index_bytes": 278528
+        },
+        "task_attempts": {
+          "n_live_tup": 975,
+          "n_dead_tup": 39,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 204800,
+          "index_bytes": 188416
+        },
+        "task_dependencies": {
+          "n_live_tup": 990,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 114688,
+          "index_bytes": 147456
+        },
+        "task_events": {
+          "n_live_tup": 3143,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 835584,
+          "index_bytes": 393216
+        }
+      }
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.545794,
+      "tasks_per_second": 646.9167301723257,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 120.0,
+        "p95": 254.0,
+        "p99": 256.0,
+        "max": 257.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 5.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 1401.9904999999999,
+        "p95": 1415.0543499999999,
+        "p99": 1420.1126499999998,
+        "max": 1420.375
+      },
+      "top_statements": [],
+      "scenario": "linear10",
+      "workers": 2,
+      "concurrency": 4,
+      "trial": 0,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 211,
+          "n_dead_tup": 420,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 16384,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 2110,
+          "n_dead_tup": 6090,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 106496,
+          "index_bytes": 98304
+        },
+        "task_attempts": {
+          "n_live_tup": 2100,
+          "n_dead_tup": 80,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 106496,
+          "index_bytes": 49152
+        },
+        "task_dependencies": {
+          "n_live_tup": 1899,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 8192,
+          "index_bytes": 32768
+        },
+        "task_events": {
+          "n_live_tup": 6721,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 114688,
+          "index_bytes": 73728
+        }
+      }
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.586222,
+      "tasks_per_second": 630.4287798303138,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 124.0,
+        "p95": 196.0,
+        "p99": 207.0,
+        "max": 218.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 1398.6194999999998,
+        "p95": 1417.1561,
+        "p99": 1427.1587399999999,
+        "max": 1430.202
+      },
+      "top_statements": [],
+      "scenario": "linear10",
+      "workers": 2,
+      "concurrency": 4,
+      "trial": 1,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 315,
+          "n_dead_tup": 540,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 106496,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 3150,
+          "n_dead_tup": 7937,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 589824,
+          "index_bytes": 294912
+        },
+        "task_attempts": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 237568,
+          "index_bytes": 172032
+        },
+        "task_dependencies": {
+          "n_live_tup": 2835,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 114688,
+          "index_bytes": 147456
+        },
+        "task_events": {
+          "n_live_tup": 8792,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 843776,
+          "index_bytes": 401408
+        }
+      }
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.488403,
+      "tasks_per_second": 671.8610483854171,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 112.0,
+        "p95": 139.0,
+        "p99": 143.0,
+        "max": 146.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 3.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 1236.7475,
+        "p95": 1293.6595499999999,
+        "p99": 1298.34059,
+        "max": 1302.062
+      },
+      "top_statements": [],
+      "scenario": "linear10",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 0,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 421,
+          "n_dead_tup": 840,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 16384,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 4210,
+          "n_dead_tup": 12180,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 106496,
+          "index_bytes": 98304
+        },
+        "task_attempts": {
+          "n_live_tup": 1481,
+          "n_dead_tup": 103,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 131072,
+          "index_bytes": 49152
+        },
+        "task_dependencies": {
+          "n_live_tup": 3789,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 8192,
+          "index_bytes": 32768
+        },
+        "task_events": {
+          "n_live_tup": 13441,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 172032,
+          "index_bytes": 73728
+        }
+      }
+    },
+    {
+      "runs": 100,
+      "tasks": 1000,
+      "tasks_succeeded": 1000,
+      "attempts": 1000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.43243,
+      "tasks_per_second": 698.1143930244409,
+      "queue_wait_ms": {
+        "n": 1000,
+        "p50": 111.0,
+        "p95": 152.0,
+        "p99": 159.0,
+        "max": 162.0
+      },
+      "execution_ms": {
+        "n": 1000,
+        "p50": 0.0,
+        "p95": 1.0,
+        "p99": 1.0,
+        "max": 2.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 1230.976,
+        "p95": 1263.53525,
+        "p99": 1269.31188,
+        "max": 1275.438
+      },
+      "top_statements": [],
+      "scenario": "linear10",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 1,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 507,
+          "n_dead_tup": 960,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 106496,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 5070,
+          "n_dead_tup": 13664,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 630784,
+          "index_bytes": 311296
+        },
+        "task_attempts": {
+          "n_live_tup": 498,
+          "n_dead_tup": 217,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 262144,
+          "index_bytes": 188416
+        },
+        "task_dependencies": {
+          "n_live_tup": 4563,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 163840,
+          "index_bytes": 147456
+        },
+        "task_events": {
+          "n_live_tup": 15131,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 892928,
+          "index_bytes": 385024
+        }
+      }
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 2.016126,
+      "tasks_per_second": 515.8407758245269,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 817.0,
+        "p95": 1523.0,
+        "p99": 1585.2199999999998,
+        "max": 1600.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 3.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1960.241,
+        "p95": 1997.1109999999999,
+        "p99": 1998.4941999999999,
+        "max": 1998.84
+      },
+      "top_statements": [],
+      "scenario": "wide50",
+      "workers": 1,
+      "concurrency": 8,
+      "trial": 0,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 630,
+          "n_dead_tup": 1260,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 16384,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 6300,
+          "n_dead_tup": 18270,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 172032,
+          "index_bytes": 98304
+        },
+        "task_attempts": {
+          "n_live_tup": 2100,
+          "n_dead_tup": 116,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 98304,
+          "index_bytes": 49152
+        },
+        "task_dependencies": {
+          "n_live_tup": 5670,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 65536,
+          "index_bytes": 49152
+        },
+        "task_events": {
+          "n_live_tup": 20160,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 139264,
+          "index_bytes": 65536
+        }
+      }
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 2.041359,
+      "tasks_per_second": 509.46452828728314,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 948.0,
+        "p95": 1740.1,
+        "p99": 1808.8299999999997,
+        "max": 1827.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 2.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 2003.085,
+        "p95": 2022.0176999999999,
+        "p99": 2022.24114,
+        "max": 2022.297
+      },
+      "top_statements": [],
+      "scenario": "wide50",
+      "workers": 1,
+      "concurrency": 8,
+      "trial": 1,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 652,
+          "n_dead_tup": 1284,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 16384,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 7444,
+          "n_dead_tup": 21039,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 1286144,
+          "index_bytes": 327680
+        },
+        "task_attempts": {
+          "n_live_tup": 615,
+          "n_dead_tup": 77,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 229376,
+          "index_bytes": 163840
+        },
+        "task_dependencies": {
+          "n_live_tup": 7870,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 196608,
+          "index_bytes": 237568
+        },
+        "task_events": {
+          "n_live_tup": 22975,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 827392,
+          "index_bytes": 393216
+        }
+      }
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.863711,
+      "tasks_per_second": 558.0264322097149,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 712.0,
+        "p95": 1022.05,
+        "p99": 1084.2199999999998,
+        "max": 1103.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1714.8775,
+        "p95": 1807.3998,
+        "p99": 1807.85276,
+        "max": 1807.966
+      },
+      "top_statements": [],
+      "scenario": "wide50",
+      "workers": 2,
+      "concurrency": 8,
+      "trial": 0,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 672,
+          "n_dead_tup": 1344,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 16384,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 8484,
+          "n_dead_tup": 24780,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 221184,
+          "index_bytes": 98304
+        },
+        "task_attempts": {
+          "n_live_tup": 1973,
+          "n_dead_tup": 111,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 106496,
+          "index_bytes": 49152
+        },
+        "task_dependencies": {
+          "n_live_tup": 9870,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 40960,
+          "index_bytes": 49152
+        },
+        "task_events": {
+          "n_live_tup": 26796,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 196608,
+          "index_bytes": 73728
+        }
+      }
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 2.05958,
+      "tasks_per_second": 504.9573213956244,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 902.5,
+        "p95": 1642.1,
+        "p99": 1787.2199999999998,
+        "max": 1806.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 2.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1997.8400000000001,
+        "p95": 2037.4989999999998,
+        "p99": 2038.2894000000001,
+        "max": 2038.487
+      },
+      "top_statements": [],
+      "scenario": "wide50",
+      "workers": 2,
+      "concurrency": 8,
+      "trial": 1,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 691,
+          "n_dead_tup": 1378,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 49152,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 9472,
+          "n_dead_tup": 28055,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 1409024,
+          "index_bytes": 327680
+        },
+        "task_attempts": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 286720,
+          "index_bytes": 163840
+        },
+        "task_dependencies": {
+          "n_live_tup": 11770,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 172032,
+          "index_bytes": 262144
+        },
+        "task_events": {
+          "n_live_tup": 30124,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 884736,
+          "index_bytes": 409600
+        }
+      }
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.760093,
+      "tasks_per_second": 590.8778683853637,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 737.0,
+        "p95": 1199.05,
+        "p99": 1256.61,
+        "max": 1272.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 2.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1627.853,
+        "p95": 1698.9881500000001,
+        "p99": 1702.38003,
+        "max": 1703.228
+      },
+      "top_statements": [],
+      "scenario": "wide50",
+      "workers": 4,
+      "concurrency": 8,
+      "trial": 0,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 16384,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 262144,
+          "index_bytes": 98304
+        },
+        "task_attempts": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 90112,
+          "index_bytes": 49152
+        },
+        "task_dependencies": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 65536,
+          "index_bytes": 49152
+        },
+        "task_events": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 278528,
+          "index_bytes": 65536
+        }
+      }
+    },
+    {
+      "runs": 20,
+      "tasks": 1040,
+      "tasks_succeeded": 1040,
+      "attempts": 1040,
+      "attempt_outcomes": {
+        "SUCCEEDED": 1040
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 1.820721,
+      "tasks_per_second": 571.2022874454681,
+      "queue_wait_ms": {
+        "n": 1040,
+        "p50": 747.0,
+        "p95": 1429.0,
+        "p99": 1490.0,
+        "max": 1507.0
+      },
+      "execution_ms": {
+        "n": 1040,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 20,
+        "p50": 1742.0320000000002,
+        "p95": 1760.5798,
+        "p99": 1764.81756,
+        "max": 1765.877
+      },
+      "top_statements": [],
+      "scenario": "wide50",
+      "workers": 4,
+      "concurrency": 8,
+      "trial": 1,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 18,
+          "n_dead_tup": 27,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 49152,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 936,
+          "n_dead_tup": 3087,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 1482752,
+          "index_bytes": 335872
+        },
+        "task_attempts": {
+          "n_live_tup": 985,
+          "n_dead_tup": 633,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 360448,
+          "index_bytes": 155648
+        },
+        "task_dependencies": {
+          "n_live_tup": 1800,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 188416,
+          "index_bytes": 221184
+        },
+        "task_events": {
+          "n_live_tup": 3132,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 942080,
+          "index_bytes": 401408
+        }
+      }
+    },
+    {
+      "runs": 100,
+      "tasks": 2000,
+      "tasks_succeeded": 2000,
+      "attempts": 2000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 2000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 3.769243,
+      "tasks_per_second": 530.6105231209556,
+      "queue_wait_ms": {
+        "n": 2000,
+        "p50": 429.0,
+        "p95": 831.0,
+        "p99": 849.01,
+        "max": 859.0
+      },
+      "execution_ms": {
+        "n": 2000,
+        "p50": 0.0,
+        "p95": 1.0,
+        "p99": 2.0,
+        "max": 7.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 3543.5855,
+        "p95": 3579.8046,
+        "p99": 3586.0261400000004,
+        "max": 3591.386
+      },
+      "top_statements": [],
+      "scenario": "mixed20",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 0,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 44,
+          "n_dead_tup": 84,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 16384,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 2224,
+          "n_dead_tup": 6510,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 237568,
+          "index_bytes": 122880
+        },
+        "task_attempts": {
+          "n_live_tup": 2184,
+          "n_dead_tup": 355,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 155648,
+          "index_bytes": 49152
+        },
+        "task_dependencies": {
+          "n_live_tup": 4276,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 163840,
+          "index_bytes": 57344
+        },
+        "task_events": {
+          "n_live_tup": 6638,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 221184,
+          "index_bytes": 131072
+        }
+      }
+    },
+    {
+      "runs": 100,
+      "tasks": 2000,
+      "tasks_succeeded": 2000,
+      "attempts": 2000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 2000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 3.021323,
+      "tasks_per_second": 661.9616638141634,
+      "queue_wait_ms": {
+        "n": 2000,
+        "p50": 369.0,
+        "p95": 456.0,
+        "p99": 468.0,
+        "max": 471.0
+      },
+      "execution_ms": {
+        "n": 2000,
+        "p50": 0.0,
+        "p95": 1.0,
+        "p99": 1.0,
+        "max": 4.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 2692.83,
+        "p95": 2740.05905,
+        "p99": 2744.69086,
+        "max": 2752.993
+      },
+      "top_statements": [],
+      "scenario": "mixed20",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 1,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 152,
+          "n_dead_tup": 208,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 139264,
+          "index_bytes": 106496
+        },
+        "tasks": {
+          "n_live_tup": 4384,
+          "n_dead_tup": 12565,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 1441792,
+          "index_bytes": 475136
+        },
+        "task_attempts": {
+          "n_live_tup": 2011,
+          "n_dead_tup": 247,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 442368,
+          "index_bytes": 278528
+        },
+        "task_dependencies": {
+          "n_live_tup": 8380,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 294912,
+          "index_bytes": 385024
+        },
+        "task_events": {
+          "n_live_tup": 12925,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 1613824,
+          "index_bytes": 729088
+        }
+      }
+    }
+  ]
+}
