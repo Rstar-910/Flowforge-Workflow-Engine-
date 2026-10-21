@@ -110,7 +110,7 @@ A lease is a failure *detector*, not a kill switch:
 | Short database outage (shorter than the lease) | Workers back off on claim errors, and renewals fail and are retried. Commits retry with backoff. The task completes in one attempt. | `test_short_database_outage_is_survived` (TCP proxy cut for 1.5 s) |
 | Long database outage for one worker (longer than the lease) | The worker stops its handler once its local deadline passes. The scheduler recovers the lease and another worker completes the task. On reconnect, the partitioned worker's commit is rejected. | `test_long_database_outage_leads_to_safe_takeover` |
 | Database outage for the API | `/health/ready` returns 503. Requests get 503 `unavailable` with `Retry-After`, and no internals are exposed. | `test_database_outage_returns_503_without_internals` |
-| Commit acknowledgement lost (committed, then the connection dropped) | The worker retries the commit. It finds its own attempt already finished and treats that as `already_recorded`, not as stale. | code path in `complete_attempt`; not fault-injected |
+| Commit acknowledgement lost (the COMMIT succeeded, but the reply never reached the worker) | The worker retries the commit. It finds its own attempt already finished and treats that as `already_recorded`, not as stale. The result is written once, and no false `stale_result_rejected` event appears. | `test_lost_commit_acknowledgement_is_not_mistaken_for_a_stale_result` (a TCP proxy swallows PostgreSQL's `CommandComplete("COMMIT")` and kills the connection; a mutation check confirms the test fails without the `already_recorded` logic) |
 | Retry exhaustion | Task FAILED (the dead-letter state), with full attempt history, errors, and timestamps kept. Dependents become UPSTREAM_FAILED, and the run becomes FAILED once independent branches finish. An admin can retry it manually. | `test_retries_are_bounded_then_failure_propagates`, `test_manual_retry_reopens_failed_task_and_dependents` |
 | Handler timeout | `async`: interrupted. `process`: killed. `thread`: abandoned and counted as a zombie against capacity (ADR 0008). The attempt is `TIMED_OUT` and retried if the policy allows. | `test_execution_timeout_async_and_process`, `test_thread_timeout_counts_zombie_until_thread_returns` |
 | Cancellation during execution | See `state-machines.md`. Cooperative handlers end CANCELLED. Uncooperative ones record their true outcome, and the run still ends CANCELLED. | `test_cancel_run_with_ready_blocked_and_running_tasks`, `test_cancel_with_uncooperative_handler_waits_for_completion` |
@@ -143,8 +143,6 @@ A lease is a failure *detector*, not a kill switch:
   execution timeouts and lease timeouts exist.
 - **Compensation / sagas** are not implemented.
 - **Rate limiting** is per API process, not global.
-- **The ambiguous commit path** (committed, acknowledgement lost) is handled in code but
-  has no fault-injection test.
 - The test suite runs PostgreSQL in Docker on one host. It does not exercise real
   network partitions between hosts, disk failures, or PostgreSQL failover. Under
   synchronous replication the transactional guarantees should carry over to failover;

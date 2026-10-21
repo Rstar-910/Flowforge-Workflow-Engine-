@@ -227,7 +227,7 @@ with an explicit reason. In CI they fail instead (`FLOWFORGE_REQUIRE_DB=1`).
 | `tests/integration/test_api.py` | auth, roles, tenant isolation, validation errors, size limits, idempotency over HTTP, pagination, health, metrics labels, rate limit, database outage returning 503 |
 | `tests/integration/test_schema.py` | `alembic check` (models match migrations), downgrade/upgrade round trip, CHECK, unique, and FK constraints, immutability triggers |
 | `tests/integration/test_random_dags.py` | 8 seeded random DAGs with flaky tasks: no task starts before its dependencies succeed |
-| `tests/failure/test_process_failures.py` | real processes: crash after claim, SIGKILL mid-task, crash after a side effect (duplicate vs. de-duplicated), SIGSTOP pause, missing heartbeats, graceful SIGTERM, scheduler SIGKILL and restart, short and long PostgreSQL outages (TCP proxy) |
+| `tests/failure/test_process_failures.py` | real processes: crash after claim, SIGKILL mid-task, crash after a side effect (duplicate vs. de-duplicated), SIGSTOP pause, missing heartbeats, graceful SIGTERM, scheduler SIGKILL and restart, short and long PostgreSQL outages, a lost COMMIT acknowledgement (TCP proxy) |
 
 ## Failure injection
 

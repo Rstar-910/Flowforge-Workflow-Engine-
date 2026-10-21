@@ -121,8 +121,18 @@ def process_group(tmp: Path, env: dict[str, str]) -> Iterator[ProcessGroup]:
         group.close()
 
 
+# PostgreSQL wire protocol: CommandComplete ('C'), int32 length 11, tag "COMMIT\0".
+COMMIT_COMPLETE = b"C\x00\x00\x00\x0bCOMMIT\x00"
+
+
 class TcpProxy:
-    """A TCP forwarder that can sever all connections to simulate a database outage."""
+    """A TCP forwarder that can sever all connections to simulate a database outage.
+
+    It can also simulate a *lost commit acknowledgement*: once armed, the next
+    server->client chunk carrying PostgreSQL's CommandComplete("COMMIT") is
+    swallowed and that connection is killed. The commit is durable on the
+    server, but the client never learns that it succeeded.
+    """
 
     def __init__(self, target_host: str, target_port: int) -> None:
         self.target = (target_host, target_port)
@@ -130,6 +140,11 @@ class TcpProxy:
         self.port = 0
         self.connections: set[asyncio.StreamWriter] = set()
         self.cut_off = False
+        self.drop_commit_ack = False
+        self.dropped_commit_acks = 0
+
+    def arm_drop_commit_ack(self) -> None:
+        self.drop_commit_ack = True
 
     async def start(self) -> None:
         self.server = await asyncio.start_server(self._handle, "127.0.0.1", self.port)
@@ -146,9 +161,19 @@ class TcpProxy:
             return
         self.connections.update({writer, up_writer})
 
-        async def pipe(src: asyncio.StreamReader, dst: asyncio.StreamWriter) -> None:
+        async def pipe(
+            src: asyncio.StreamReader, dst: asyncio.StreamWriter, *, from_server: bool
+        ) -> None:
+            tail = b""  # the marker could straddle two reads
             try:
                 while data := await src.read(65536):
+                    if from_server and self.drop_commit_ack and COMMIT_COMPLETE in tail + data:
+                        self.drop_commit_ack = False
+                        self.dropped_commit_acks += 1
+                        writer.transport.abort()  # client never sees "COMMIT ok"
+                        up_writer.transport.abort()
+                        return
+                    tail = data[-len(COMMIT_COMPLETE) :]
                     dst.write(data)
                     await dst.drain()
             except (ConnectionError, OSError):
@@ -156,7 +181,10 @@ class TcpProxy:
             finally:
                 dst.close()
 
-        await asyncio.gather(pipe(reader, up_writer), pipe(up_reader, writer))
+        await asyncio.gather(
+            pipe(reader, up_writer, from_server=False),
+            pipe(up_reader, writer, from_server=True),
+        )
         self.connections.discard(writer)
         self.connections.discard(up_writer)
 

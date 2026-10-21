@@ -378,3 +378,52 @@ async def test_long_database_outage_leads_to_safe_takeover(db, registry, tmp_pat
         e for e in await events_for(db, run_id) if e["event_type"] == "stale_result_rejected"
     )
     assert json.loads(json.dumps(event["data"]))["worker_id"] == "partitioned"
+
+
+async def test_lost_commit_acknowledgement_is_not_mistaken_for_a_stale_result(
+    db, registry, tmp_path, env
+):
+    """The completion COMMIT succeeds in PostgreSQL but its reply never reaches the worker.
+
+    The worker cannot know whether its result was saved, so it retries the commit.
+    The retry must recognise its own, already-recorded attempt: the task stays
+    SUCCEEDED with exactly one attempt, the result is written once, and no
+    false stale_result_rejected event appears.
+    """
+    target = make_url(TEST_DB_URL)
+    proxy = TcpProxy(target.host or "localhost", target.port or 5432)
+    await proxy.start()
+    run_id = await start_run(
+        db, registry, [task("t", "test.wait_for_release", input={"key": "ack"}, max_attempts=3)]
+    )
+    try:
+        with process_group(tmp_path, env) as pg:
+            # Long lease / heartbeat interval: the only COMMIT the worker sends while
+            # the proxy is armed is the task's completion (claims run in autocommit).
+            w = pg.worker(
+                "w",
+                FLOWFORGE_DATABASE_URL=_proxied_url(proxy),
+                FLOWFORGE_LEASE_SECONDS="60",
+                FLOWFORGE_HEARTBEAT_INTERVAL_SECONDS="30",
+            )
+            await wait_for(lambda: _file(tmp_path / "ack.started"), timeout=20)
+            proxy.arm_drop_commit_ack()
+            (tmp_path / "ack.release").touch()
+            assert (
+                await wait_for_run(db, run_id, {"SUCCEEDED", "FAILED"}, timeout=30) == "SUCCEEDED"
+            )
+            await asyncio.sleep(1.0)  # let the worker's retry finish
+
+            assert proxy.dropped_commit_acks == 1, "the commit acknowledgement was not dropped"
+            log = w.output()
+            assert "commit failed" in log, log  # the worker really saw the failure and retried
+    finally:
+        await proxy.close()
+
+    attempts = await attempts_for(db, run_id)
+    assert [(a["worker_id"], a["outcome"]) for a in attempts] == [("w", "SUCCEEDED")]
+    t = (await tasks_by_key(db, run_id))["t"]
+    assert t["attempt_count"] == 1 and t["output_json"] == {"released": "ack", "attempt": 1}
+    events = [e["event_type"] for e in await events_for(db, run_id)]
+    assert "stale_result_rejected" not in events
+    assert events.count("attempt_finished") == 1  # written exactly once
