@@ -148,8 +148,44 @@ async def test_queue_timeout_never_fires_for_a_claimed_task(db, registry):
     assert (await tasks_by_key(db, run_id))["a"]["status"] == "RUNNING"
 
 
-async def test_queue_timeout_restarts_after_retry_wait(db, settings, registry):
-    """Time spent in RETRY_WAIT is not queue time: the clock restarts on READY."""
+async def test_queue_timeout_restarts_after_retry_wait(db, registry):
+    """Time spent in RETRY_WAIT (or any earlier READY period) is not queue time: promoting
+    a retry restarts the clock. Deterministic: the scheduler steps are called directly, so
+    no worker can claim the task in between and hide a wrong clock."""
+    from flowforge.domain.errors import FailureInfo
+    from flowforge.engine.execution import complete_attempt
+    from flowforge.engine.recovery import promote_due_retries
+    from flowforge.engine.types import Failed
+
+    run_id = await start_run(db, registry, [task("t", queue_timeout=5)])
+    c = (await claim_tasks(db, worker_id="w", handlers=["noop"], limit=1, lease_seconds=60))[0]
+    await complete_attempt(
+        db, claimed=c, worker_id="w", result=Failed(FailureInfo("X", "x", True)), duration_ms=1
+    )
+    async with db.begin() as conn:  # first READY was an hour ago; the retry is due now
+        await conn.execute(
+            text(
+                "UPDATE tasks SET ready_at = now() - interval '1 hour',"
+                " next_attempt_at = now() - interval '1 second' WHERE run_id = :r"
+            ),
+            {"r": run_id},
+        )
+    assert await promote_due_retries(db, limit=10) == 1
+    assert await fail_queue_timeouts(db, limit=10) == 0  # fresh clock: 5 s not yet used up
+    t = (await tasks_by_key(db, run_id))["t"]
+    assert t["status"] == "READY"
+    async with db.connect() as conn:
+        waited = (
+            await conn.execute(
+                text("SELECT extract(epoch FROM now() - ready_at) FROM tasks WHERE run_id = :r"),
+                {"r": run_id},
+            )
+        ).scalar_one()
+    assert float(waited) < 5
+
+
+async def test_queue_timeout_with_retries_end_to_end(db, settings, registry):
+    """End-to-end companion: a retry that waits longer than the queue timeout still runs."""
     run_id = await start_run(
         db,
         registry,

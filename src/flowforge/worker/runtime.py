@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import functools
 import json
 import logging
 import os
@@ -17,6 +18,7 @@ from sqlalchemy.exc import DBAPIError, InterfaceError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from flowforge.config import Settings
+from flowforge.db.session import retry_if_connection_was_dead
 from flowforge.domain.definition import json_size
 from flowforge.domain.errors import (
     FailureInfo,
@@ -127,12 +129,15 @@ class Worker:
         delay = self.settings.worker_poll_interval_seconds
         while not stop.is_set():
             try:
-                await register_worker(
-                    self.engine,
-                    self.worker_id,
-                    pid=os.getpid(),
-                    concurrency=self.concurrency,
-                    handlers=self.registry.names(),
+                await retry_if_connection_was_dead(
+                    lambda: register_worker(
+                        self.engine,
+                        self.worker_id,
+                        pid=os.getpid(),
+                        concurrency=self.concurrency,
+                        handlers=self.registry.names(),
+                    ),
+                    "worker",
                 )
                 return
             except DB_ERRORS as exc:
@@ -156,12 +161,16 @@ class Worker:
                 continue
             claim_started = time.monotonic()
             try:
-                claimed = await claim_tasks(
-                    self.engine,
-                    worker_id=self.worker_id,
-                    handlers=self.registry.names(),
-                    limit=free,
-                    lease_seconds=self.settings.lease_seconds,
+                claimed = await retry_if_connection_was_dead(
+                    functools.partial(
+                        claim_tasks,
+                        self.engine,
+                        worker_id=self.worker_id,
+                        handlers=self.registry.names(),
+                        limit=free,
+                        lease_seconds=self.settings.lease_seconds,
+                    ),
+                    "worker",
                 )
                 error_streak = 0
             except DB_ERRORS as exc:
@@ -245,6 +254,13 @@ class Worker:
                 # Side effects (if any) have happened; the result is not yet durable.
                 self.faults.crash_if("crash_after_handler")
                 outcome = await self._commit(entry, result, int(duration * 1000))
+                if outcome is not None and outcome.reason == "already_recorded":
+                    log_event(
+                        logger,
+                        logging.INFO,
+                        "commit acknowledgement was lost; the result was already recorded",
+                        event_type="commit_already_recorded",
+                    )
                 if outcome is not None and not outcome.accepted:
                     log_event(
                         logger,
@@ -313,12 +329,15 @@ class Worker:
         give_up_at = time.monotonic() + max(60.0, self.settings.lease_seconds * 4)
         while True:
             try:
-                return await complete_attempt(
-                    self.engine,
-                    claimed=entry.claimed,
-                    worker_id=self.worker_id,
-                    result=result,
-                    duration_ms=duration_ms,
+                return await retry_if_connection_was_dead(
+                    lambda: complete_attempt(
+                        self.engine,
+                        claimed=entry.claimed,
+                        worker_id=self.worker_id,
+                        result=result,
+                        duration_ms=duration_ms,
+                    ),
+                    "worker",
                 )
             except DB_ERRORS as exc:
                 metrics.DB_ERRORS.labels("worker").inc()
@@ -348,11 +367,14 @@ class Worker:
         entries = list(self.inflight.values())
         sent_at = time.monotonic()
         try:
-            renewal = await renew_leases(
-                self.engine,
-                worker_id=self.worker_id,
-                attempt_ids=[e.claimed.attempt_id for e in entries],
-                lease_seconds=self.settings.lease_seconds,
+            renewal = await retry_if_connection_was_dead(
+                lambda: renew_leases(
+                    self.engine,
+                    worker_id=self.worker_id,
+                    attempt_ids=[e.claimed.attempt_id for e in entries],
+                    lease_seconds=self.settings.lease_seconds,
+                ),
+                "worker",
             )
         except DB_ERRORS as exc:
             metrics.LEASE_RENEWAL_FAILURES.labels("db_error").inc()

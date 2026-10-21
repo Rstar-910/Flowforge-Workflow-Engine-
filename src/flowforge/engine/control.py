@@ -145,9 +145,20 @@ async def retry_failed_task(
             raise ConflictError(f"only FAILED tasks can be retried (task is {task['status']})")
         if run["status"] not in (RunStatus.RUNNING, RunStatus.FAILED):
             raise ConflictError(f"cannot retry a task of a {run['status']} run")
-        if run["deadline_exceeded_at"] is not None:
+        deadline_passed = (
+            run["deadline_at"] is not None
+            and (
+                await conn.execute(
+                    text("SELECT CAST(:d AS timestamptz) <= statement_timestamp()"),
+                    {"d": run["deadline_at"]},
+                )
+            ).scalar_one()
+        )
+        if run["deadline_exceeded_at"] is not None or deadline_passed:
+            # Re-opening a run past its deadline would only let the deadline sweep
+            # stop it again a moment later, cancelling the retried task.
             raise ConflictError(
-                "the run failed its workflow deadline; start a new run instead of retrying"
+                "the run's workflow deadline has passed; start a new run instead of retrying"
             )
         policy = RetryPolicy.model_validate(task["retry_policy"])
         await conn.execute(

@@ -98,6 +98,13 @@ A crashed worker's lease expires. The scheduler records the attempt as `LEASE_EX
   cancellation and retry semantics.
 - [docs/failure-model.md](docs/failure-model.md): guarantees, scenario-by-scenario
   behaviour, and limitations.
+- [docs/failure-model-verification.md](docs/failure-model-verification.md): for each
+  failure scenario, how it's induced, the evidence it happened, where the outcome is
+  checked in PostgreSQL, and the mutation that proves the test catches it
+  ([mutation-results.md](docs/mutation-results.md)).
+- [docs/correctness-audit.md](docs/correctness-audit.md): every state transition, its
+  lock and guard, a race matrix with tests, and global invariants checked after every
+  test.
 - [docs/decisions/](docs/decisions/): architecture decision records.
 - [docs/benchmark-results.md](docs/benchmark-results.md): measured results and method.
 
@@ -216,8 +223,9 @@ timeout can kill it.
 ## Tests
 
 ```bash
-uv run pytest -q                 # everything (unit, integration, concurrency, failure injection)
+uv run pytest -q                 # everything; global invariants are checked after every DB test
 uv run pytest -q tests/unit      # no database needed
+uv run python scripts/mutation_check.py   # remove each protection; its test must fail
 uv sync --extra otel && uv run ruff check . && uv run ruff format --check . && uv run mypy
                                  # static checks (mypy --strict; the otel extra is type-checked too)
 ```
@@ -235,8 +243,10 @@ with an explicit reason. In CI they fail instead (`FLOWFORGE_REQUIRE_DB=1`).
 | `tests/integration/test_reliability.py` | stale-worker rejection, lease expiry consuming attempts, scheduler recovery, cancellation (cooperative and uncooperative), manual retry, scheduler restart with RETRY_WAIT, reconciler |
 | `tests/integration/test_api.py` | auth, roles, tenant isolation, validation errors, size limits, idempotency over HTTP, pagination, health, metrics labels, rate limit, database outage returning 503 |
 | `tests/integration/test_schema.py` | `alembic check` (models match migrations), downgrade/upgrade round trip, CHECK, unique, and FK constraints, immutability triggers |
+| `tests/integration/test_races.py` | two valid operations at once: completion, recovery, renewal, cancel, deadline, retry promotion, manual retry, two schedulers. Forced interleavings and randomized repetition |
+| `tests/integration/test_reconnect.py` | a pooled connection the server killed while idle is retried once; real errors are not |
 | `tests/integration/test_random_dags.py` | 8 seeded random DAGs with flaky tasks: no task starts before its dependencies succeed |
-| `tests/failure/test_process_failures.py` | real processes: crash after claim, SIGKILL mid-task, crash after a side effect (duplicate vs. de-duplicated), SIGSTOP pause, missing heartbeats, graceful SIGTERM, scheduler SIGKILL and restart, short and long PostgreSQL outages, a lost COMMIT acknowledgement (TCP proxy) |
+| `tests/failure/test_process_failures.py` | real processes: crash after claim, SIGKILL mid-task, crash after a side effect (duplicate vs. de-duplicated), SIGSTOP pause, missing heartbeats, graceful SIGTERM, scheduler SIGKILL and restart, short and long PostgreSQL outages, a lost COMMIT acknowledgement (TCP proxy), a scheduler restart during a partition, server-side session kills |
 
 ## Failure injection
 

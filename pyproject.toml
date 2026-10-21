@@ -54,6 +54,7 @@ markers = [
     "integration: requires PostgreSQL",
     "process: spawns real worker/scheduler/API processes",
     "slow: long-running tests",
+    "no_invariants: test deliberately leaves the database inconsistent",
 ]
 addopts = "-ra --strict-markers"
 
@@ -82,6 +83,7 @@ ignore = [
 "tests/**" = ["S", "PLC0415", "ASYNC"]
 "scripts/**" = ["S", "PLC0415", "T201"]
 "migrations/**" = ["E501"]
+"scripts/mutation_check.py" = ["E501"]  # edit anchors must match source lines verbatim
 
 [tool.mypy]
 python_version = "3.12"

@@ -107,10 +107,15 @@ async def engine(db_ready: None, settings: Settings) -> AsyncIterator[AsyncEngin
 
 
 @pytest.fixture
-async def db(engine: AsyncEngine) -> AsyncEngine:
+async def db(engine: AsyncEngine, request: pytest.FixtureRequest) -> AsyncIterator[AsyncEngine]:
     async with engine.begin() as conn:
         await conn.execute(text(f"TRUNCATE {TABLES} RESTART IDENTITY CASCADE"))
-    return engine
+    yield engine
+    # Every integration test also proves global consistency of what it left behind.
+    if not request.node.get_closest_marker("no_invariants"):
+        from tests.support.invariants import assert_invariants
+
+        await assert_invariants(engine)
 
 
 @pytest.fixture(scope="session")

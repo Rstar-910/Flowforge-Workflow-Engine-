@@ -1,0 +1,337 @@
+[
+  {
+    "id": "M01",
+    "protection": "completion is fenced on the attempt id (lease token)",
+    "scenario": "stale worker / paused worker / partitioned worker cannot overwrite a newer attempt",
+    "file": "engine/execution.py",
+    "tests": [
+      "tests/integration/test_reliability.py::test_stale_worker_cannot_overwrite_newer_attempt",
+      "tests/integration/test_races.py::test_stale_worker_reusing_its_worker_id_cannot_touch_the_new_attempt",
+      "tests/integration/test_races.py::test_stale_attempt_cannot_overwrite_a_manually_retried_task"
+    ],
+    "status": "killed",
+    "detail": "ERROR tests/integration/test_reliability.py::test_stale_worker_cannot_overwrite_newer_attempt",
+    "seconds": 0.9
+  },
+  {
+    "id": "M02",
+    "protection": "lease recovery re-checks expiry at write time",
+    "scenario": "a worker that renewed in time is not robbed of its lease",
+    "file": "engine/execution.py",
+    "tests": [
+      "tests/integration/test_races.py::test_renewal_vs_lease_recovery_never_both"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_races.py::test_renewal_vs_lease_recovery_never_both",
+    "seconds": 0.6
+  },
+  {
+    "id": "M03",
+    "protection": "lease renewal is restricted to the lease owner",
+    "scenario": "another worker cannot extend (and so keep alive) a lease it does not own",
+    "file": "engine/execution.py",
+    "tests": [
+      "tests/integration/test_reliability.py::test_renewal_keeps_lease_and_recovery_ignores_live_leases"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_reliability.py::test_renewal_keeps_lease_and_recovery_ignores_live_leases",
+    "seconds": 0.6
+  },
+  {
+    "id": "M04",
+    "protection": "run-row lock serialises progression",
+    "scenario": "sibling completions cannot both miss promoting their shared child (write skew)",
+    "file": "engine/sql.py",
+    "tests": [
+      "tests/integration/test_concurrency.py::test_fan_in_promotion_has_no_write_skew"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_concurrency.py::test_fan_in_promotion_has_no_write_skew[2]",
+    "seconds": 0.8
+  },
+  {
+    "id": "M05",
+    "protection": "a pending retry is cancelled if the run was cancelled meanwhile",
+    "scenario": "cancellation during execution cannot leave claimable work behind",
+    "file": "engine/execution.py",
+    "tests": [
+      "tests/integration/test_races.py::test_cancel_commits_before_a_failing_completion_is_applied",
+      "tests/integration/test_races.py::test_cancel_commits_before_a_lease_recovery_is_applied"
+    ],
+    "status": "killed",
+    "detail": "ERROR tests/integration/test_races.py::test_cancel_commits_before_a_failing_completion_is_applied",
+    "seconds": 0.7
+  },
+  {
+    "id": "M06",
+    "protection": "claims lock READY rows (FOR UPDATE SKIP LOCKED)",
+    "scenario": "two workers never own the same attempt",
+    "file": "engine/execution.py",
+    "tests": [
+      "tests/integration/test_concurrency.py::test_concurrent_claimers_never_share_a_task"
+    ],
+    "status": "killed",
+    "detail": "ERROR tests/integration/test_concurrency.py::test_concurrent_claimers_never_share_a_task[0]",
+    "seconds": 1.0
+  },
+  {
+    "id": "M07",
+    "protection": "retries (and lease expiries) are bounded by attempt_limit",
+    "scenario": "retry exhaustion terminates; a poison task cannot loop forever",
+    "file": "engine/execution.py",
+    "tests": [
+      "tests/integration/test_reliability.py::test_lease_expiry_consumes_attempts_and_terminates",
+      "tests/integration/test_execution.py::test_retries_are_bounded_then_failure_propagates"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_reliability.py::test_lease_expiry_consumes_attempts_and_terminates",
+    "seconds": 0.7
+  },
+  {
+    "id": "M08",
+    "protection": "a retried commit recognises its own already-recorded result",
+    "scenario": "commit acknowledgement lost",
+    "file": "engine/execution.py",
+    "tests": [
+      "tests/failure/test_process_failures.py::test_lost_commit_acknowledgement_is_not_mistaken_for_a_stale_result"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/failure/test_process_failures.py::test_lost_commit_acknowledgement_is_not_mistaken_for_a_stale_result",
+    "seconds": 2.0
+  },
+  {
+    "id": "M09",
+    "protection": "one immediate retry when a pooled connection was already dead",
+    "scenario": "PostgreSQL terminates worker sessions (restart, idle timeout, kill)",
+    "file": "db/session.py",
+    "tests": [
+      "tests/integration/test_reconnect.py",
+      "tests/failure/test_process_failures.py::test_server_side_session_kills_during_a_workflow"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_reconnect.py::test_first_use_of_a_server_killed_connection_is_retried_once",
+    "seconds": 0.8
+  },
+  {
+    "id": "M10",
+    "protection": "idempotency key reserved in the submission transaction",
+    "scenario": "duplicate submissions (also concurrent) create one run",
+    "file": "engine/submission.py",
+    "tests": [
+      "tests/integration/test_concurrency.py::test_concurrent_idempotent_submissions_create_one_run"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_concurrency.py::test_concurrent_idempotent_submissions_create_one_run",
+    "seconds": 0.7
+  },
+  {
+    "id": "M11",
+    "protection": "failure propagates to dependents (UPSTREAM_FAILED)",
+    "scenario": "retry exhaustion / permanent failure fails the run",
+    "file": "engine/progression.py",
+    "tests": [
+      "tests/integration/test_execution.py::test_retries_are_bounded_then_failure_propagates"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_execution.py::test_retries_are_bounded_then_failure_propagates",
+    "seconds": 20.7
+  },
+  {
+    "id": "M12",
+    "protection": "the scheduler stops overdue runs",
+    "scenario": "workflow deadline passes",
+    "file": "engine/timeouts.py",
+    "tests": [
+      "tests/integration/test_deadlines.py::test_deadline_with_nothing_running_fails_immediately",
+      "tests/integration/test_deadlines.py::test_deadline_stops_a_running_workflow_and_fails_it"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_deadlines.py::test_deadline_with_nothing_running_fails_immediately",
+    "seconds": 1.3
+  },
+  {
+    "id": "M13",
+    "protection": "a queue timeout only fails a task that is still READY",
+    "scenario": "a claim racing a queue timeout",
+    "file": "engine/timeouts.py",
+    "tests": [
+      "tests/integration/test_deadlines.py::test_queue_timeout_never_fires_for_a_claimed_task",
+      "tests/integration/test_deadlines.py::test_queue_timeout_races_with_claims_safely"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_deadlines.py::test_queue_timeout_never_fires_for_a_claimed_task",
+    "seconds": 0.7
+  },
+  {
+    "id": "M14",
+    "protection": "retention skips runs locked by another transaction",
+    "scenario": "retention runs while an admin retries a run",
+    "file": "engine/retention.py",
+    "tests": [
+      "tests/integration/test_retention.py::test_runs_locked_by_another_transaction_are_skipped"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_retention.py::test_runs_locked_by_another_transaction_are_skipped",
+    "seconds": 16.0
+  },
+  {
+    "id": "M15",
+    "protection": "retention only selects finished runs (status filter)",
+    "scenario": "active runs are never deleted",
+    "file": "engine/retention.py",
+    "tests": [
+      "tests/integration/test_retention.py::test_active_runs_are_never_deleted_however_old"
+    ],
+    "status": "survived (expected)",
+    "detail": "1 passed in 0.71s",
+    "seconds": 1.1
+  },
+  {
+    "id": "M16",
+    "protection": "manual retry refused once the workflow deadline has passed",
+    "scenario": "manual retry of a deadline-failed run",
+    "file": "engine/control.py",
+    "tests": [
+      "tests/integration/test_races.py::test_manual_retry_refused_once_the_deadline_has_passed",
+      "tests/integration/test_deadlines.py::test_user_cancel_still_ends_cancelled_and_deadline_runs_cannot_be_retried"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_races.py::test_manual_retry_refused_once_the_deadline_has_passed",
+    "seconds": 1.1
+  },
+  {
+    "id": "M17",
+    "protection": "a stale report for a deleted run is dropped, not retried",
+    "scenario": "worker reports after retention deleted its run",
+    "file": "engine/execution.py",
+    "tests": [
+      "tests/integration/test_retention.py::test_stale_result_for_a_run_deleted_by_retention_is_dropped"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_retention.py::test_stale_result_for_a_run_deleted_by_retention_is_dropped",
+    "seconds": 0.8
+  },
+  {
+    "id": "M18",
+    "protection": "a cancelled subprocess handler is signalled before any await",
+    "scenario": "process-isolated handler cancelled twice",
+    "file": "worker/executor.py",
+    "tests": [
+      "tests/unit/test_worker_units.py::test_cancelled_process_handler_never_outlives_cancellation"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/unit/test_worker_units.py::test_cancelled_process_handler_never_outlives_cancellation",
+    "seconds": 1.9
+  },
+  {
+    "id": "M19",
+    "protection": "downstream de-duplication on the engine's operation key",
+    "scenario": "crash after an external side effect, before the result is saved",
+    "file": "handlers/builtin.py",
+    "tests": [
+      "tests/failure/test_process_failures.py::test_crash_after_side_effect_before_commit"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/failure/test_process_failures.py::test_crash_after_side_effect_before_commit[True]",
+    "seconds": 5.9
+  },
+  {
+    "id": "M20",
+    "protection": "the scheduler recovers expired leases",
+    "scenario": "worker crash (after claim, SIGKILL mid-task)",
+    "file": "engine/recovery.py",
+    "tests": [
+      "tests/failure/test_process_failures.py::test_worker_sigkill_during_execution_is_recovered",
+      "tests/integration/test_reliability.py::test_lease_expiry_recovered_by_scheduler_and_rerun"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/failure/test_process_failures.py::test_worker_sigkill_during_execution_is_recovered",
+    "seconds": 21.1
+  },
+  {
+    "id": "M21",
+    "protection": "workers renew leases while executing (heartbeats)",
+    "scenario": "a task longer than its lease is not stolen from a healthy worker",
+    "file": "worker/runtime.py",
+    "tests": [
+      "tests/failure/test_process_failures.py::test_heartbeats_keep_a_task_longer_than_its_lease"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/failure/test_process_failures.py::test_heartbeats_keep_a_task_longer_than_its_lease",
+    "seconds": 8.3
+  },
+  {
+    "id": "M22",
+    "protection": "graceful shutdown drains in-flight tasks",
+    "scenario": "graceful shutdown (SIGTERM)",
+    "file": "worker/runtime.py",
+    "tests": [
+      "tests/failure/test_process_failures.py::test_graceful_shutdown_finishes_inflight_and_stops_claiming"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/failure/test_process_failures.py::test_graceful_shutdown_finishes_inflight_and_stops_claiming",
+    "seconds": 1.1
+  },
+  {
+    "id": "M23",
+    "protection": "lease renewal tells the worker that its run is being cancelled",
+    "scenario": "cancellation during execution (cooperative handlers stop)",
+    "file": "engine/execution.py",
+    "tests": [
+      "tests/integration/test_reliability.py::test_cancel_run_with_ready_blocked_and_running_tasks"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_reliability.py::test_cancel_run_with_ready_blocked_and_running_tasks",
+    "seconds": 15.9
+  },
+  {
+    "id": "M24",
+    "protection": "run lookups are tenant-scoped",
+    "scenario": "tenant isolation",
+    "file": "engine/queries.py",
+    "tests": [
+      "tests/integration/test_api.py::test_tenant_isolation"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_api.py::test_tenant_isolation",
+    "seconds": 0.9
+  },
+  {
+    "id": "M25",
+    "protection": "a child is promoted only when all its dependencies succeeded",
+    "scenario": "dependency order",
+    "file": "engine/progression.py",
+    "tests": [
+      "tests/integration/test_execution.py::test_diamond_dependencies_and_run_output",
+      "tests/integration/test_random_dags.py"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_random_dags.py::test_random_dag_respects_dependencies[0]",
+    "seconds": 1.5
+  },
+  {
+    "id": "M26",
+    "protection": "dependency cycles are rejected before storage",
+    "scenario": "invalid graphs never execute",
+    "file": "domain/definition.py",
+    "tests": [
+      "tests/unit/test_definition.py",
+      "tests/integration/test_api.py::test_invalid_graphs_are_rejected_before_storage"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/unit/test_definition.py::test_invalid_graphs[tasks5-dependency cycle]",
+    "seconds": 0.5
+  },
+  {
+    "id": "M27",
+    "protection": "a promoted retry restarts its queue-timeout clock (ready_at)",
+    "scenario": "time in RETRY_WAIT does not count towards the queue timeout",
+    "file": "engine/recovery.py",
+    "tests": [
+      "tests/integration/test_deadlines.py::test_queue_timeout_restarts_after_retry_wait"
+    ],
+    "status": "killed",
+    "detail": "FAILED tests/integration/test_deadlines.py::test_queue_timeout_restarts_after_retry_wait",
+    "seconds": 0.6
+  }
+]

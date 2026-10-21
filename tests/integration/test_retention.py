@@ -242,3 +242,23 @@ async def test_scheduler_applies_retention_on_its_own_interval(db, settings, reg
     assert first.retention is not None and first.retention.runs_deleted == 1
     second = await sched.cycle()
     assert second.retention is None  # not due again for an hour
+
+
+async def test_stale_result_for_a_run_deleted_by_retention_is_dropped(db, registry):
+    """A worker that comes back after its run was deleted gets a clean rejection,
+    not a foreign-key error it would retry for a minute."""
+    from flowforge.engine.execution import claim_tasks, complete_attempt
+    from flowforge.engine.types import Succeeded
+
+    run_id = await start_run(db, registry, [task("a")])
+    claimed = (await claim_tasks(db, worker_id="w", handlers=["noop"], limit=1, lease_seconds=30))[
+        0
+    ]
+    async with db.begin() as conn:  # the run was finished and later deleted by retention
+        await conn.execute(text("DELETE FROM workflow_runs WHERE id = :r"), {"r": run_id})
+    outcome = await complete_attempt(
+        db, claimed=claimed, worker_id="w", result=Succeeded({}), duration_ms=1
+    )
+    assert not outcome.accepted and outcome.reason == "lease_lost"
+    async with db.connect() as conn:
+        assert (await conn.execute(text("SELECT count(*) FROM task_events"))).scalar_one() == 0

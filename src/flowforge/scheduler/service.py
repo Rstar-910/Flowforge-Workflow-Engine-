@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from flowforge.config import Settings
+from flowforge.db.session import retry_if_connection_was_dead
 from flowforge.engine.recovery import (
     promote_due_retries,
     reconcile_runs,
@@ -101,7 +102,7 @@ class Scheduler:
         error_streak = 0
         while not stop.is_set():
             try:
-                stats = await self.cycle()
+                stats = await retry_if_connection_was_dead(self.cycle, "scheduler")
                 error_streak = 0
                 # Stay busy while there is a backlog; otherwise sleep.
                 busy = (

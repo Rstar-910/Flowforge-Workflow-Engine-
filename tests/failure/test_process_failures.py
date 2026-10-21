@@ -21,6 +21,7 @@ from tests.conftest import TEST_DB_URL
 from tests.support.helpers import (
     attempts_for,
     events_for,
+    run_status,
     start_run,
     task,
     tasks_by_key,
@@ -416,7 +417,9 @@ async def test_lost_commit_acknowledgement_is_not_mistaken_for_a_stale_result(
 
             assert proxy.dropped_commit_acks == 1, "the commit acknowledgement was not dropped"
             log = w.output()
-            assert "commit failed" in log, log  # the worker really saw the failure and retried
+            # Evidence the scenario was exercised: the worker retried the commit and found
+            # its own result (the outcome itself is checked in PostgreSQL below).
+            assert "event_type=commit_already_recorded" in log, log
     finally:
         await proxy.close()
 
@@ -427,3 +430,120 @@ async def test_lost_commit_acknowledgement_is_not_mistaken_for_a_stale_result(
     events = [e["event_type"] for e in await events_for(db, run_id)]
     assert "stale_result_rejected" not in events
     assert events.count("attempt_finished") == 1  # written exactly once
+
+
+async def test_stale_worker_after_scheduler_restart_and_reconnect(db, registry, tmp_path, env):
+    """Worker A is partitioned mid-task; the scheduler is SIGKILLed and replaced; a new
+    scheduler process recovers the lease and worker B finishes the task. When A's network
+    heals and it reconnects, its result must be rejected by the fenced commit."""
+    target = make_url(TEST_DB_URL)
+    proxy = TcpProxy(target.host or "localhost", target.port or 5432)
+    await proxy.start()
+    run_id = await start_run(
+        db,
+        registry,
+        [task("t", "test.wait_for_release", input={"key": "z"}, initial_delay=0, max_attempts=3)],
+    )
+    try:
+        with process_group(tmp_path, env) as pg:
+            first_scheduler = pg.scheduler("scheduler-1")
+            pg.worker("A", FLOWFORGE_DATABASE_URL=_proxied_url(proxy))
+            await wait_for(lambda: _file(tmp_path / "z.started"), timeout=20)
+            (tmp_path / "z.started").unlink()
+
+            proxy.cut()  # A keeps executing but can no longer reach PostgreSQL
+            first_scheduler.kill()
+            pg.scheduler("scheduler-2")  # a fresh process with no memory of the first
+            pg.worker("B")
+            await wait_for(lambda: _file(tmp_path / "z.started"), timeout=20)  # attempt 2 on B
+            (tmp_path / "z.release").touch()  # both handlers now return
+            assert await wait_for_run(db, run_id, {"SUCCEEDED"}, timeout=20) == "SUCCEEDED"
+
+            proxy.restore()  # A reconnects and tries to commit attempt 1
+
+            async def stale() -> bool:
+                return any(
+                    e["event_type"] == "stale_result_rejected" for e in await events_for(db, run_id)
+                )
+
+            await wait_for(stale, timeout=30)
+    finally:
+        await proxy.close()
+    attempts = await attempts_for(db, run_id)
+    assert [(a["attempt_number"], a["worker_id"], a["outcome"]) for a in attempts] == [
+        (1, "A", "LEASE_EXPIRED"),
+        (2, "B", "SUCCEEDED"),
+    ]
+    t = (await tasks_by_key(db, run_id))["t"]
+    assert t["output_json"] == {"released": "z", "attempt": 2}
+    stale_event = next(
+        e for e in await events_for(db, run_id) if e["event_type"] == "stale_result_rejected"
+    )
+    assert stale_event["data"]["worker_id"] == "A" and stale_event["data"]["attempt_number"] == 1
+
+
+async def test_server_side_session_kills_during_a_workflow(db, registry, tmp_path, env):
+    """PostgreSQL repeatedly terminates every worker session (as a server restart or an
+    admin's pg_terminate_backend would), rolling back in-flight claims and commits.
+    The workflow must still complete, with no duplicate or lost results."""
+    name = "ff-worker-under-test"
+    n = 60
+    tasks = [task("root")] + [
+        task(f"leaf{i:02d}", "sleep", ["root"], input={"seconds": 0.02}, max_attempts=20)
+        for i in range(n)
+    ]
+    tasks.append(task("join", "noop", [f"leaf{i:02d}" for i in range(n)]))
+    run_id = await start_run(db, registry, tasks)
+    kills = 0
+    with process_group(tmp_path, env) as pg:
+        pg.scheduler()
+        workers = [pg.worker(f"k{i}", concurrency=4, FLOWFORGE_SERVICE_NAME=name) for i in (1, 2)]
+
+        async def done() -> bool:
+            return (await run_status(db, run_id)) in ("SUCCEEDED", "FAILED")
+
+        deadline = time.monotonic() + 60  # a time bound, so a liveness bug fails fast
+        while not await done():
+            assert time.monotonic() < deadline, f"no completion within 60 s ({kills} kills)"
+            async with db.connect() as conn:
+                kills += int(
+                    (
+                        await conn.execute(
+                            text(
+                                "SELECT count(*) FILTER (WHERE pg_terminate_backend(pid))"
+                                " FROM pg_stat_activity WHERE application_name = :n"
+                            ),
+                            {"n": name},
+                        )
+                    ).scalar_one()
+                )
+            await asyncio.sleep(0.02)
+        logs = "".join(w.output() for w in workers)
+    assert await run_status(db, run_id) == "SUCCEEDED"
+    interrupted = sum(
+        logs.count(marker) for marker in ("claim failed", "commit failed", "lease renewal failed")
+    )
+    # Evidence the kills hit live operations, not just idle pooled connections.
+    assert interrupted > 0, f"{kills} kills never interrupted a claim/commit/renewal"
+    attempts = await attempts_for(db, run_id)
+    assert sum(a["outcome"] == "SUCCEEDED" for a in attempts) == n + 2  # one per task
+    print(
+        f"terminated {kills} worker sessions; {interrupted} interrupted operations retried; "
+        f"{len(attempts)} attempts for {n + 2} tasks"
+    )
+
+
+async def test_heartbeats_keep_a_task_longer_than_its_lease(db, registry, tmp_path, env):
+    """A healthy worker must keep a task that runs far longer than the lease (2 s here):
+    heartbeats renew it, so the scheduler never recovers it and it runs exactly once."""
+    run_id = await start_run(
+        db, registry, [task("long", "sleep", input={"seconds": 5}, max_attempts=3)]
+    )
+    with process_group(tmp_path, env) as pg:
+        pg.scheduler()
+        pg.worker("w")
+        assert await wait_for_run(db, run_id, {"SUCCEEDED", "FAILED"}, timeout=30) == "SUCCEEDED"
+    attempts = await attempts_for(db, run_id)
+    assert [(a["worker_id"], a["outcome"]) for a in attempts] == [("w", "SUCCEEDED")]
+    assert attempts[0]["duration_ms"] >= 5000  # really outlived the 2 s lease
+    assert "lease_expired" not in [e["event_type"] for e in await events_for(db, run_id)]

@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 from sqlalchemy import event
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
 
 from flowforge.config import Settings
@@ -80,3 +81,29 @@ async def transaction(engine: AsyncEngine) -> AsyncIterator[AsyncConnection]:
     """A short READ COMMITTED transaction on a pooled connection."""
     async with engine.begin() as conn:
         yield conn
+
+
+async def retry_if_connection_was_dead[T](op: Callable[[], Awaitable[T]], component: str) -> T:
+    """Run ``op``; if it failed only because its pooled connection was already dead, retry once.
+
+    Workers and the scheduler run without pool pre-ping (ADR 0011). A connection the
+    server closed while it sat idle in the pool (PostgreSQL restart, an idle timeout,
+    a dropped TCP connection, pg_terminate_backend) therefore fails on its next use.
+    SQLAlchemy flags that case with ``connection_invalidated`` and discards the
+    connection; it is not evidence that the database is down, so one immediate retry
+    on a fresh connection is right, instead of entering exponential backoff. Any
+    other error, or a second failure, propagates to the caller's backoff.
+
+    Only use for operations that are safe to repeat: claims (one atomic statement),
+    lease renewal (idempotent), fenced completion (recognises its own committed
+    result), and scheduler sweeps (each step re-checks state under lock).
+    """
+    from flowforge.observability import metrics
+
+    try:
+        return await op()
+    except DBAPIError as exc:
+        if not exc.connection_invalidated:
+            raise
+        metrics.DB_RECONNECTS.labels(component).inc()
+        return await op()

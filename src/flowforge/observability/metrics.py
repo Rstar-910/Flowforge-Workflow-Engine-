@@ -97,6 +97,11 @@ DB_QUERY_DURATION = Histogram(
     "Duration of individual SQL statements.",
     buckets=LATENCY_BUCKETS,
 )
+DB_RECONNECTS = Counter(
+    "flowforge_db_reconnects_total",
+    "Operations retried once because their pooled connection had been closed by the server.",
+    ["component"],
+)
 DB_ERRORS = Counter(
     "flowforge_database_errors_total", "Database errors by component.", ["component"]
 )

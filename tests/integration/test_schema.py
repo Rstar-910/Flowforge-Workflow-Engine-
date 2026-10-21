@@ -60,6 +60,7 @@ async def test_task_constraints(db, registry):
         )
 
 
+@pytest.mark.no_invariants  # inserts a bare RUNNING attempt to probe constraints
 async def test_attempt_and_run_constraints(db, registry):
     run_id = await start_run(db, registry, [task("a")])
     a = (await tasks_by_key(db, run_id))["a"]["id"]

@@ -50,3 +50,29 @@ jobs:
         run: uv run pytest -q
       - name: quick benchmark smoke run (numbers are not compared in CI)
         run: uv run python scripts/benchmark.py --quick --only linear,crash
+
+  mutation:
+    # Proves each failure-model test fails when its protection is removed.
+    runs-on: ubuntu-latest
+    needs: test
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: flowforge
+          POSTGRES_PASSWORD: flowforge
+          POSTGRES_DB: flowforge
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U flowforge"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      FLOWFORGE_REQUIRE_DB: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --locked
+      - name: mutation check (fails on any unexpected survivor)
+        run: uv run python scripts/mutation_check.py
