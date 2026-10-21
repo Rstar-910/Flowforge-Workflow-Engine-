@@ -50,7 +50,9 @@ async def _run_worker(settings: Settings, concurrency: int, worker_id: str | Non
 
     registry = load_handler_modules(settings.handler_module_list())
     # Pool: one connection per concurrent completion plus claim + heartbeat.
-    engine = create_engine(settings, pool_size=concurrency + 2, pre_ping=False)
+    engine = create_engine(
+        settings, pool_size=concurrency + 2, pre_ping=False, narrow_lookups_only=True
+    )
     stop = asyncio.Event()
     _install_signal_handlers(stop)
     try:
@@ -65,7 +67,7 @@ async def _run_scheduler(settings: Settings) -> None:
     from flowforge.db.session import create_engine
     from flowforge.scheduler.service import Scheduler
 
-    engine = create_engine(settings, pool_size=3, pre_ping=False)
+    engine = create_engine(settings, pool_size=3, pre_ping=False, narrow_lookups_only=True)
     stop = asyncio.Event()
     _install_signal_handlers(stop)
     try:

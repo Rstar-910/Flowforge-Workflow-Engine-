@@ -325,6 +325,72 @@ async def collect(engine: AsyncEngine, run_ids: list[uuid.UUID]) -> dict[str, An
 # ------------------------------------------------------------------ scenarios
 
 
+HOT_TABLES = ("tasks", "task_events", "task_attempts", "workflow_runs", "task_dependencies")
+
+
+async def table_stats(engine: AsyncEngine) -> dict[str, dict[str, int]]:
+    """Live/dead tuples, on-disk size and autovacuum activity of the hot tables."""
+    async with engine.connect() as conn:
+        rows = (
+            await conn.execute(
+                text(
+                    "SELECT relname, n_live_tup, n_dead_tup, autovacuum_count, autoanalyze_count,"
+                    " pg_table_size(relid) AS table_bytes,"
+                    " pg_indexes_size(relid) AS index_bytes"
+                    " FROM pg_stat_user_tables WHERE relname = ANY(:t)"
+                ),
+                {"t": list(HOT_TABLES)},
+            )
+        ).mappings()
+        return {r["relname"]: {k: int(v) for k, v in r.items() if k != "relname"} for r in rows}
+
+
+PGSS = {"enabled": False}  # set by --pg-stat-statements
+
+
+async def pgss_reset(engine: AsyncEngine) -> None:
+    if PGSS["enabled"]:
+        async with engine.begin() as conn:
+            await conn.execute(text("SELECT pg_stat_statements_reset()"))
+
+
+async def pgss_top(engine: AsyncEngine, limit: int = 8) -> list[dict[str, Any]]:
+    """Most expensive statements since the last reset (server-side execution time)."""
+    if not PGSS["enabled"]:
+        return []
+    async with engine.connect() as conn:
+        rows = (
+            await conn.execute(
+                text(
+                    "SELECT left(regexp_replace(query, '\\s+', ' ', 'g'), 120) AS query,"
+                    " calls, round(total_exec_time::numeric, 1) AS total_ms,"
+                    " round(mean_exec_time::numeric, 3) AS mean_ms,"
+                    " shared_blks_hit + shared_blks_read AS blocks"
+                    " FROM pg_stat_statements WHERE dbid = (SELECT oid FROM pg_database"
+                    " WHERE datname = current_database()) ORDER BY total_exec_time DESC LIMIT :n"
+                ),
+                {"n": limit},
+            )
+        ).mappings()
+        return [
+            {k: (float(v) if k in ("total_ms", "mean_ms") else v) for k, v in r.items()}
+            for r in rows
+        ]
+
+
+async def between_trials(engine: AsyncEngine, mode: str) -> None:
+    if mode == "vacuum":
+        async with engine.connect() as raw:
+            conn = await raw.execution_options(isolation_level="AUTOCOMMIT")
+            await conn.execute(text("VACUUM (ANALYZE) " + ", ".join(HOT_TABLES)))
+    elif mode == "analyze":
+        async with engine.connect() as raw:
+            conn = await raw.execution_options(isolation_level="AUTOCOMMIT")
+            await conn.execute(text("ANALYZE " + ", ".join(HOT_TABLES)))
+    elif mode == "truncate":
+        await truncate(engine)
+
+
 async def scenario_execution(
     engine: AsyncEngine,
     cluster: Cluster,
@@ -335,6 +401,7 @@ async def scenario_execution(
     workers: int,
     concurrency: int,
     trials: int,
+    between: str = "none",
 ) -> list[dict[str, Any]]:
     results = []
     cluster.workers(workers, concurrency)
@@ -344,17 +411,34 @@ async def scenario_execution(
         warm = await submit_many(engine, def_id, max(2, runs // 10))  # warm-up, not measured
         await wait_runs_done(engine, warm, 300)
         for trial in range(trials):
+            if trial:
+                await between_trials(engine, between)
+                if between == "truncate":  # the definition was truncated too
+                    def_id = await define(engine, f"{name}-{uuid.uuid4().hex[:6]}", tasks)
+            stats_before = await table_stats(engine)
+            await pgss_reset(engine)
             ids = await submit_many(engine, def_id, runs)
             await wait_runs_done(engine, ids, 600)
             r = await collect(engine, ids)
+            r["top_statements"] = await pgss_top(engine)
             r.update(
-                {"scenario": name, "workers": workers, "concurrency": concurrency, "trial": trial}
+                {
+                    "scenario": name,
+                    "workers": workers,
+                    "concurrency": concurrency,
+                    "trial": trial,
+                    "between_trials": between,
+                    "db_before": stats_before,
+                }
             )
             results.append(r)
             print(
                 f"  {name} w={workers}x{concurrency} trial {trial}: "
                 f"{r['tasks_per_second']:.0f} tasks/s, queue p95 "
-                f"{r['queue_wait_ms']['p95']:.0f} ms",
+                f"{r['queue_wait_ms']['p95']:.0f} ms | before trial: tasks "
+                f"live={stats_before.get('tasks', {}).get('n_live_tup', 0)} "
+                f"dead={stats_before.get('tasks', {}).get('n_dead_tup', 0)} "
+                f"idx={stats_before.get('tasks', {}).get('index_bytes', 0) // 1024}KiB",
                 flush=True,
             )
     finally:
@@ -620,6 +704,17 @@ async def main() -> None:
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--trials", type=int, default=None)
     ap.add_argument("--only", default="")
+    ap.add_argument(
+        "--between-trials",
+        choices=("none", "analyze", "vacuum", "truncate"),
+        default="none",
+        help="maintenance between trials of execution scenarios (default: none)",
+    )
+    ap.add_argument(
+        "--pg-stat-statements",
+        action="store_true",
+        help="record per-trial top statements (server needs pg_stat_statements preloaded)",
+    )
     args = ap.parse_args()
     quick = args.quick
     trials = args.trials or (1 if quick else 3)
@@ -629,6 +724,12 @@ async def main() -> None:
         return not only or name in only
 
     await reset_database(args.database_url)
+    if args.pg_stat_statements:
+        PGSS["enabled"] = True
+        ext = create_async_engine(args.database_url, isolation_level="AUTOCOMMIT")
+        async with ext.connect() as conn:
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_stat_statements"))
+        await ext.dispose()
     out_dir = ROOT / "benchmarks" / "results"
     out_dir.mkdir(parents=True, exist_ok=True)
     log_dir = out_dir / "logs"
@@ -656,6 +757,7 @@ async def main() -> None:
                     workers=w,
                     concurrency=4,
                     trials=trials,
+                    between=args.between_trials,
                 )
         if want("wide"):
             for w in (1, 2, 4):
@@ -668,6 +770,7 @@ async def main() -> None:
                     workers=w,
                     concurrency=8,
                     trials=trials,
+                    between=args.between_trials,
                 )
         if want("mixed"):
             results += await scenario_execution(
@@ -679,6 +782,7 @@ async def main() -> None:
                 workers=4,
                 concurrency=4,
                 trials=trials,
+                between=args.between_trials,
             )
         if want("flaky"):
             results += await scenario_execution(
@@ -690,6 +794,7 @@ async def main() -> None:
                 workers=4,
                 concurrency=4,
                 trials=trials,
+                between=args.between_trials,
             )
         if want("crash"):
             results += await scenario_crash_recovery(engine, cluster, trials=trials)

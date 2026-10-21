@@ -67,115 +67,123 @@ Reproduce with `uv run python scripts/benchmark.py`; `--quick` gives a smaller r
 
 ## Results (current implementation)
 
-Raw data: [`benchmarks/results/20261021T125203Z.json`](../benchmarks/results/20261021T125203Z.json),
-which includes per-trial percentiles and the READY-depth samples for the overload run.
-The table below is exactly what the script printed.
+Raw data: [`benchmarks/results/20261021T144223Z.json`](../benchmarks/results/20261021T144223Z.json).
+This run includes the fixes from ADR 0011 and ADR 0012. The tables are exactly what
+the script printed.
 
 | HTTP submission | runs/s | p50 ms | p95 ms | p99 ms | errors |
 |---|---|---|---|---|---|
-| trial 0 (1000 req, 16 parallel) | 257 | 53.0 | 100.9 | 181.7 | 0 |
-| trial 1 (1000 req, 16 parallel) | 245 | 56.7 | 108.5 | 205.7 | 0 |
-| trial 2 (1000 req, 16 parallel) | 222 | 60.6 | 142.5 | 216.1 | 0 |
+| trial 0 (1000 req, 16 parallel) | 288 | 50.1 | 82.3 | 127.2 | 0 |
+| trial 1 (1000 req, 16 parallel) | 252 | 56.5 | 95.7 | 150.0 | 0 |
+| trial 2 (1000 req, 16 parallel) | 270 | 53.9 | 89.1 | 98.3 | 0 |
 
 | workload | workers x slots | trial | tasks | attempts | tasks/s | queue wait p50/p95/p99 ms | exec p50/p95/p99 ms | run e2e p50/p95 ms | dup results |
 |---|---|---|---|---|---|---|---|---|---|
-| linear10 | 1x4 | 0 | 1000 | 1000 | 476 | 182/246/263 | 0/0/0 | 1898/1953 | 0 |
-| linear10 | 1x4 | 1 | 1000 | 1000 | 434 | 192/332/334 | 0/0/0 | 2122/2136 | 0 |
-| linear10 | 1x4 | 2 | 1000 | 1000 | 534 | 156/218/246 | 0/0/0 | 1653/1676 | 0 |
-| linear10 | 2x4 | 0 | 1000 | 1000 | 735 | 106/155/164 | 0/0/0 | 1216/1226 | 0 |
-| linear10 | 2x4 | 1 | 1000 | 1000 | 701 | 111/174/194 | 0/0/1 | 1277/1296 | 0 |
-| linear10 | 2x4 | 2 | 1000 | 1000 | 738 | 107/162/187 | 0/0/0 | 1208/1217 | 0 |
-| linear10 | 4x4 | 0 | 1000 | 1000 | 867 | 87/106/115 | 0/0/1 | 969/1005 | 0 |
-| linear10 | 4x4 | 1 | 1000 | 1000 | 889 | 81/99/103 | 0/0/1 | 916/937 | 0 |
-| linear10 | 4x4 | 2 | 1000 | 1000 | 846 | 87/108/114 | 0/0/1 | 971/995 | 0 |
-| wide50 | 1x8 | 0 | 1040 | 1040 | 552 | 772/1375/1425 | 0/0/1 | 1810/1864 | 0 |
-| wide50 | 1x8 | 1 | 1040 | 1040 | 545 | 923/1533/1586 | 0/0/1 | 1870/1891 | 0 |
-| wide50 | 1x8 | 2 | 1040 | 1040 | 596 | 690/1301/1357 | 0/0/0 | 1701/1727 | 0 |
-| wide50 | 2x8 | 0 | 1040 | 1040 | 670 | 631/1034/1101 | 0/0/0 | 1464/1487 | 0 |
-| wide50 | 2x8 | 1 | 1040 | 1040 | 583 | 764/1513/1572 | 0/0/0 | 1740/1759 | 0 |
-| wide50 | 2x8 | 2 | 1040 | 1040 | 718 | 632/1058/1088 | 0/0/0 | 1378/1400 | 0 |
-| wide50 | 4x8 | 0 | 1040 | 1040 | 713 | 592/1136/1190 | 0/0/1 | 1331/1418 | 0 |
-| wide50 | 4x8 | 1 | 1040 | 1040 | 696 | 596/1237/1287 | 0/0/1 | 1420/1459 | 0 |
-| wide50 | 4x8 | 2 | 1040 | 1040 | 680 | 610/1011/1064 | 0/0/1 | 1433/1459 | 0 |
-| mixed20 | 4x4 | 0 | 2000 | 2000 | 867 | 264/374/379 | 0/0/0 | 2051/2109 | 0 |
-| mixed20 | 4x4 | 1 | 2000 | 2000 | 504 | 386/874/1020 | 0/1/3 | 3720/3744 | 0 |
-| mixed20 | 4x4 | 2 | 2000 | 2000 | 413 | 551/964/1125 | 0/1/3 | 4363/4535 | 0 |
-| flaky_p0.3 | 4x4 | 0 | 1000 | 1419 | 201 | 598/1100/1156 | 0/0/1 | 1683/2888 | 0 |
-| flaky_p0.3 | 4x4 | 1 | 1000 | 1444 | 257 | 468/874/919 | 0/0/1 | 1385/2469 | 0 |
-| flaky_p0.3 | 4x4 | 2 | 1000 | 1408 | 220 | 1182/1474/1497 | 0/0/1 | 2188/3080 | 0 |
+| linear10 | 1x4 | 0 | 1000 | 1000 | 535 | 164/208/214 | 0/0/0 | 1707/1725 | 0 |
+| linear10 | 1x4 | 1 | 1000 | 1000 | 565 | 150/174/176 | 0/0/0 | 1558/1587 | 0 |
+| linear10 | 1x4 | 2 | 1000 | 1000 | 511 | 152/283/310 | 0/0/0 | 1751/1786 | 0 |
+| linear10 | 2x4 | 0 | 1000 | 1000 | 741 | 106/131/141 | 0/0/0 | 1132/1142 | 0 |
+| linear10 | 2x4 | 1 | 1000 | 1000 | 687 | 109/196/218 | 0/0/0 | 1294/1307 | 0 |
+| linear10 | 2x4 | 2 | 1000 | 1000 | 675 | 114/212/219 | 0/0/0 | 1324/1341 | 0 |
+| linear10 | 4x4 | 0 | 1000 | 1000 | 928 | 83/95/98 | 0/0/1 | 907/928 | 0 |
+| linear10 | 4x4 | 1 | 1000 | 1000 | 886 | 87/97/100 | 0/0/1 | 898/934 | 0 |
+| linear10 | 4x4 | 2 | 1000 | 1000 | 847 | 88/109/117 | 0/0/1 | 948/990 | 0 |
+| wide50 | 1x8 | 0 | 1040 | 1040 | 645 | 654/1282/1336 | 0/0/0 | 1561/1595 | 0 |
+| wide50 | 1x8 | 1 | 1040 | 1040 | 569 | 782/1434/1492 | 0/0/0 | 1788/1810 | 0 |
+| wide50 | 1x8 | 2 | 1040 | 1040 | 576 | 734/1438/1498 | 0/0/0 | 1771/1787 | 0 |
+| wide50 | 2x8 | 0 | 1040 | 1040 | 690 | 604/1002/1054 | 0/0/1 | 1420/1449 | 0 |
+| wide50 | 2x8 | 1 | 1040 | 1040 | 674 | 652/1298/1352 | 0/0/0 | 1473/1521 | 0 |
+| wide50 | 2x8 | 2 | 1040 | 1040 | 626 | 702/1354/1407 | 0/0/0 | 1620/1640 | 0 |
+| wide50 | 4x8 | 0 | 1040 | 1040 | 666 | 774/1192/1223 | 0/0/1 | 1479/1517 | 0 |
+| wide50 | 4x8 | 1 | 1040 | 1040 | 728 | 612/1167/1213 | 0/0/1 | 1345/1380 | 0 |
+| wide50 | 4x8 | 2 | 1040 | 1040 | 757 | 562/1100/1150 | 0/0/1 | 1306/1328 | 0 |
+| mixed20 | 4x4 | 0 | 2000 | 2000 | 836 | 284/397/405 | 0/0/1 | 2166/2205 | 0 |
+| mixed20 | 4x4 | 1 | 2000 | 2000 | 772 | 309/455/459 | 0/0/1 | 2354/2389 | 0 |
+| mixed20 | 4x4 | 2 | 2000 | 2000 | 729 | 322/499/503 | 0/0/1 | 2545/2566 | 0 |
+| flaky_p0.3 | 4x4 | 0 | 1000 | 1461 | 266 | 457/855/884 | 0/0/1 | 1373/2105 | 0 |
+| flaky_p0.3 | 4x4 | 1 | 1000 | 1415 | 345 | 451/873/918 | 0/0/1 | 1440/2298 | 0 |
+| flaky_p0.3 | 4x4 | 2 | 1000 | 1507 | 178 | 433/832/877 | 0/0/1 | 1504/2941 | 0 |
 
 | crash recovery | lease s | recovery p50 s | max s |
 |---|---|---|---|
-| trial 0 | 5.0 | 6.13 | 6.13 |
-| trial 1 | 5.0 | 6.36 | 6.36 |
-| trial 2 | 5.0 | 6.33 | 6.33 |
+| trial 0 | 5.0 | 6.34 | 6.34 |
+| trial 1 | 5.0 | 6.27 | 6.27 |
+| trial 2 | 5.0 | 6.28 | 6.28 |
 
-Overload: offered 120 tasks/s for 10.0 s; served 56 tasks/s; peak READY depth 616; drained after 21.8 s.
+Overload: offered 120 tasks/s for 10.0 s; served 56 tasks/s; peak READY depth 623; drained after 21.8 s.
 
-## Before and after the round-trip optimisation (ADR 0011)
+Across all 25 measured workloads: **28,560 of 28,560 tasks succeeded, 0 failed runs,
+0 duplicate accepted results.**
 
-Same harness, same machine, same configuration. The baseline console output is in
-[`benchmarks/results/20261021-baseline-console.txt`](../benchmarks/results/20261021-baseline-console.txt).
-Each cell lists the 3 trials.
+## History of measured optimisations
 
-| workload | workers x slots | baseline tasks/s | optimised tasks/s |
-|---|---|---|---|
-| linear10 | 1x4 | 194 / 225 / 169 | 476 / 434 / 534 |
-| linear10 | 2x4 | 102 / 209 / 260 | 735 / 701 / 738 |
-| linear10 | 4x4 | 306 / 353 / 303 | 867 / 889 / 846 |
-| wide50 | 1x8 | 158 / 72 / 173 | 552 / 545 / 596 |
-| wide50 | 2x8 | 199 / 198 / 206 | 670 / 583 / 718 |
-| wide50 | 4x8 | 177 / 152 / 100 | 713 / 696 / 680 |
-| mixed20 | 4x4 | 167 / 171 / 230 | 867 / 504 / 413 |
-| flaky_p0.3 | 4x4 | 122 / 129 / 99 | 201 / 257 / 220 |
-| HTTP submission (runs/s) | 1 API process | 291 / 170 / 243 | 257 / 245 / 222 |
+Same harness, same machine, same configuration. Each cell lists the 3 trials.
 
-Profiling showed per-task database round trips were the bottleneck (ADR 0011). The
-optimisation cut statements per no-op task from 18 to 8. The sequential claim cost went
-from 4.8 ms to 1.9 ms. HTTP submission did not change, which is expected because that
-path was not modified.
+| workload | workers x slots | baseline | after ADR 0011 (round trips) | after ADR 0012 (plan stability) |
+|---|---|---|---|---|
+| linear10 | 4x4 | 306 / 353 / 303 | 867 / 889 / 846 | 928 / 886 / 847 |
+| wide50 | 4x8 | 177 / 152 / 100 | 713 / 696 / 680 | 666 / 728 / 757 |
+| mixed20 | 4x4 | 167 / 171 / 230 | **867 / 504 / 413** | **836 / 772 / 729** |
+| flaky_p0.3 | 4x4 | 122 / 129 / 99 | 201 / 257 / 220 | 266 / 345 / 178 |
+| HTTP submission (runs/s) | 1 API process | 291 / 170 / 243 | 257 / 245 / 222 | 288 / 252 / 270 |
+
+Raw data and console logs:
+
+- baseline: `benchmarks/results/20261021-baseline-console.txt`
+- after ADR 0011: `benchmarks/results/20261021T125203Z.json`
+- ADR 0012 diagnostics: `benchmarks/results/2026102114*.json`
+
+**ADR 0011 (round trips).** Profiling showed that each no-op task cost about 33 network
+round trips. Statements per task went from 18 to 8.
+
+**ADR 0012 (plan stability).** `mixed20` declined 52% across trials after ADR 0011.
+The investigation used per-trial table statistics, maintenance modes,
+`pg_stat_statements` and `EXPLAIN`:
+
+- With missing or stale planner statistics, the claim query used a bitmap scan. Its
+  cost grows with dead index entries: buffer reads per claim went 218 → 658 over six
+  trials.
+- Autovacuum (1-minute naptime) rarely ran within a benchmark, so nothing cleaned up
+  in time.
+- Workers and the scheduler now disable bitmap scans for their sessions. Two hot queries
+  were rewritten to be statistics-independent.
+- Claim cost is now flat: about 105 buffers per call, versus a growing number before.
 
 ## Interpretation
 
 - **Engine overhead dominates.** These are no-op tasks, so tasks/s measures claim,
-  commit, and progression cost. On this single-host setup, the optimised engine runs
-  about 850 to 890 linear tasks/s with 4 workers × 4 slots. Scaling from 1 to 4 workers
-  improves throughput by less than 2x. The workers, PostgreSQL, and the benchmark driver
-  all share 6 cores, so this run cannot separate CPU contention from database
-  contention.
-- **Wide fan-out is limited by per-run serialisation.** The run lock serialises
-  completions within one run (ADR 0005). Throughput is about 700 tasks/s whether there
-  are 2 or 4 workers. Queue-wait p95 above 1 s mostly reflects the 20 × 50-leaf burst,
-  not a slow claim.
-- **mixed20 degraded across consecutive trials (867, then 504, then 413 tasks/s).** The
-  cause has **not** been diagnosed. Tables are truncated only between scenarios, not
-  between trials, so one hypothesis is dead-tuple growth on the hot `tasks` and
-  `task_events` rows before autovacuum catches up. That is unverified. A follow-up
-  would truncate or `VACUUM` between trials and compare.
-- **flaky_p0.3** made about 1.42 attempts per task (expected 1/(1 − 0.3) ≈ 1.43). Every
-  run succeeded. Throughput is lower because of the retry backoff delays (50 ms
-  initial, with jitter) and the scheduler hop that promotes each RETRY_WAIT task
-  (250 ms interval).
-- **Crash recovery:** SIGKILL → re-execution took 6.1 to 6.4 s with a 5 s lease and a
-  1 s scheduler interval. That fits the model: lease + at most one scheduler interval +
-  claim poll + process start of the rescuer. Recovery time scales with the lease. With
-  the default 15 s lease, expect roughly 16 to 17 s (not measured).
-- **Overload:** 120 tasks/s were offered to one worker with 4 slots, each task being a
+  commit, and progression cost. On this single-host setup, linear chains run at
+  847–928 tasks/s with 4 workers × 4 slots. Going from 1 to 4 workers improves
+  throughput by less than 2×, because workers, PostgreSQL, and the benchmark driver
+  all share 6 cores.
+- **Per-run serialisation is now the main cost.** In `mixed20` and `wide50`, the
+  largest server-side time is waiting for the run lock: about 2 ms per completion,
+  flat across trials (measured with `pg_stat_statements`). This is the designed
+  trade-off of ADR 0005. More workers do not help a single wide run.
+- **Trial-to-trial variation of roughly ±10%** remains. `mixed20` still drifted
+  down mildly in this run (836 → 729). Repeated 6-trial runs after the fix ranged
+  700–821 with no consistent trend, so this is reported as variation, not as a
+  solved or unsolved trend.
+- **flaky_p0.3** made 1.42–1.51 attempts per task (expected about 1.43). Every run
+  succeeded. Throughput depends on randomised backoff (50 ms initial, with jitter)
+  and the 250 ms scheduler interval that promotes RETRY_WAIT tasks, so it varies most
+  (178–345).
+- **Crash recovery:** SIGKILL → re-execution took 6.3 s with a 5 s lease and a 1 s
+  scheduler interval: lease + at most one scheduler interval + claim poll. With the
+  default 15 s lease, expect about 16–17 s (not measured).
+- **Overload:** 120 tasks/s were offered to one worker with 4 slots, each running a
   50 ms sleep. The worker served 56 tasks/s, below the theoretical 80. The READY queue
-  grew to 616 and drained 11.8 s after submission stopped. Nothing was lost or
-  duplicated. The gap below 80 tasks/s is per-task engine overhead (claim, commit, and
-  the poll gap when a slot frees). It has not been broken down further.
-- **Correctness under load:** 0 duplicate accepted results in every trial. Every run in
-  every execution scenario succeeded.
+  peaked at 623 and drained 11.8 s after submission stopped. Nothing was lost or
+  duplicated. The gap below 80 is per-task engine overhead, not broken down further.
 
 ## Not measured
 
-- Database CPU and per-query latency.
+- Database CPU.
 - Memory per worker.
-- A comparison of polling against LISTEN/NOTIFY.
+- Polling versus LISTEN/NOTIFY.
 - Claim batch-size sweeps.
-- Behaviour on separate hosts or with a tuned PostgreSQL.
+- Separate hosts.
+- Tuned PostgreSQL, such as autovacuum settings for the queue tables.
+- Behaviour after hours of continuous load.
 
-These are listed in the README roadmap and should be measured before making decisions
-about them.
-
+These should be measured before making decisions about them.

@@ -210,13 +210,20 @@ _PROMOTE_CHILDREN_SQL = text(
         UPDATE tasks c
            SET status = 'READY', ready_at = statement_timestamp(),
                updated_at = statement_timestamp()
-         WHERE c.id IN (SELECT task_id FROM task_dependencies WHERE depends_on_task_id = :done)
+         -- id = ANY(ARRAY(...)) pins the plan to primary-key lookups driven by
+         -- the (few) dependency edges, independent of planner statistics; with
+         -- a plain join/IN, a never-analyzed table got a 60-100x slower plan
+         -- inside the run lock (ADR 0012).
+         WHERE c.id = ANY(ARRAY(
+                 SELECT task_id FROM task_dependencies WHERE depends_on_task_id = :done))
            AND c.status = 'BLOCKED'
            AND NOT EXISTS (
                  SELECT 1
-                   FROM task_dependencies d
-                   JOIN tasks p ON p.id = d.depends_on_task_id
-                  WHERE d.task_id = c.id AND p.status <> 'SUCCEEDED')
+                   FROM tasks p
+                  WHERE p.id = ANY(ARRAY(
+                          SELECT d.depends_on_task_id FROM task_dependencies d
+                           WHERE d.task_id = c.id))
+                    AND p.status <> 'SUCCEEDED')
         RETURNING c.id, c.task_key
     ), ev AS (
         INSERT INTO task_events (run_id, task_id, event_type, data)

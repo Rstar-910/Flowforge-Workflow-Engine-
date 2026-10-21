@@ -12,7 +12,11 @@ from flowforge.config import Settings
 
 
 def create_engine(
-    settings: Settings, *, pool_size: int | None = None, pre_ping: bool = True
+    settings: Settings,
+    *,
+    pool_size: int | None = None,
+    pre_ping: bool = True,
+    narrow_lookups_only: bool = False,
 ) -> AsyncEngine:
     """Create the async engine.
 
@@ -20,7 +24,24 @@ def create_engine(
     so the first request after a database restart does not fail. Workers and the
     scheduler turn it off: every loop already retries on connection errors, and
     SQLAlchemy discards a connection once it reports a disconnect.
+
+    ``narrow_lookups_only`` sets ``enable_bitmapscan = off`` for the session.
+    Worker and scheduler queries only ever fetch a few rows (primary key,
+    small index range, or ORDER BY ... LIMIT on a partial index). With stale or
+    missing statistics (a new or truncated database, before autoanalyze) the
+    planner chose bitmap scans for the claim query; a bitmap scan visits every
+    dead index entry and, unlike a plain index scan, never marks them dead, so
+    its cost grew with churn: about 100x slower than the index scan (ADR 0012).
     """
+    server_settings = {
+        "application_name": settings.service_name,
+        "statement_timeout": str(settings.db_statement_timeout_ms),
+        # Guard against forgotten open transactions holding locks.
+        "idle_in_transaction_session_timeout": "60000",
+        "timezone": "UTC",
+    }
+    if narrow_lookups_only:
+        server_settings["enable_bitmapscan"] = "off"
     engine = create_async_engine(
         settings.database_url.get_secret_value(),
         pool_size=pool_size or settings.db_pool_size,
@@ -31,13 +52,7 @@ def create_engine(
         connect_args={
             "timeout": settings.db_connect_timeout_seconds,
             "command_timeout": settings.db_statement_timeout_ms / 1000 + 5,
-            "server_settings": {
-                "application_name": settings.service_name,
-                "statement_timeout": str(settings.db_statement_timeout_ms),
-                # Guard against forgotten open transactions holding locks.
-                "idle_in_transaction_session_timeout": "60000",
-                "timezone": "UTC",
-            },
+            "server_settings": server_settings,
         },
     )
     _install_query_timing(engine)

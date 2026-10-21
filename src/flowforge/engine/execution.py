@@ -107,9 +107,13 @@ _CLAIM_SQL = text(
           FROM activated
     )
     SELECT c.*, r.input_json AS run_input, r.traceparent,
+           -- ANY(ARRAY(...)): statistics-independent primary-key lookups (ADR 0012).
            coalesce((SELECT jsonb_object_agg(p.task_key, p.output_json)
-                       FROM task_dependencies d JOIN tasks p ON p.id = d.depends_on_task_id
-                      WHERE d.task_id = c.id), '{}'::jsonb) AS dependency_outputs
+                       FROM tasks p
+                      WHERE p.id = ANY(ARRAY(SELECT d.depends_on_task_id
+                                               FROM task_dependencies d
+                                              WHERE d.task_id = c.id))),
+                    '{}'::jsonb) AS dependency_outputs
       FROM claimed c JOIN workflow_runs r ON r.id = c.run_id
     """
 ).bindparams(bindparam("handlers", type_=ARRAY(String)))

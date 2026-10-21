@@ -1,0 +1,861 @@
+{
+  "environment": {
+    "timestamp": "2026-10-21T14:38:35.138965+00:00",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "cpu": "Apple A18 Pro",
+    "cpu_count": 6,
+    "python": "3.12.13",
+    "postgres": "postgres (PostgreSQL) 17.11",
+    "database_url_host": "localhost",
+    "process_env": {
+      "FLOWFORGE_LEASE_SECONDS": "10",
+      "FLOWFORGE_HEARTBEAT_INTERVAL_SECONDS": "3",
+      "FLOWFORGE_WORKER_POLL_INTERVAL_SECONDS": "0.05",
+      "FLOWFORGE_WORKER_MAX_POLL_INTERVAL_SECONDS": "0.25",
+      "FLOWFORGE_SCHEDULER_INTERVAL_SECONDS": "0.25",
+      "FLOWFORGE_WORKER_SHUTDOWN_GRACE_SECONDS": "1",
+      "FLOWFORGE_LOG_LEVEL": "WARNING",
+      "FLOWFORGE_LOG_FORMAT": "json",
+      "FLOWFORGE_API_KEYS": "bench-key:bench:admin",
+      "FLOWFORGE_HANDLER_MODULES": "flowforge.handlers.builtin"
+    },
+    "git_commit": "b8ef145"
+  },
+  "results": [
+    {
+      "runs": 100,
+      "tasks": 2000,
+      "tasks_succeeded": 2000,
+      "attempts": 2000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 2000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 2.507495,
+      "tasks_per_second": 797.6087689108055,
+      "queue_wait_ms": {
+        "n": 2000,
+        "p50": 325.0,
+        "p95": 401.04999999999995,
+        "p99": 408.01,
+        "max": 412.0
+      },
+      "execution_ms": {
+        "n": 2000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 5.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 2326.75,
+        "p95": 2344.52765,
+        "p99": 2366.0838400000002,
+        "max": 2367.058
+      },
+      "top_statements": [
+        {
+          "query": "SELECT workflow_runs.id, workflow_runs.tenant_id, workflow_runs.definition_id, workflow_runs.status, workflow_runs.input",
+          "calls": 2000,
+          "total_ms": 4165.0,
+          "mean_ms": 2.082,
+          "blocks": 6015
+        },
+        {
+          "query": "WITH picked AS ( SELECT id FROM tasks WHERE status = 'READY' AND handler = ANY($1::VARCHAR[]) ORDER BY ready_at LIMIT $2",
+          "calls": 1620,
+          "total_ms": 1992.9,
+          "mean_ms": 1.23,
+          "blocks": 444903
+        },
+        {
+          "query": "WITH promoted AS ( UPDATE tasks c SET status = 'READY', ready_at = statement_timestamp(), updated_at = statement_timesta",
+          "calls": 2000,
+          "total_ms": 1640.4,
+          "mean_ms": 0.82,
+          "blocks": 407490
+        },
+        {
+          "query": "WITH t AS ( UPDATE tasks SET status = CAST($1 AS varchar), output_json = CASE WHEN CAST($1 AS varchar) = 'SUCCEEDED' THE",
+          "calls": 2000,
+          "total_ms": 1332.8,
+          "mean_ms": 0.666,
+          "blocks": 110774
+        },
+        {
+          "query": "INSERT INTO tasks (id, run_id, task_key, handler, status, input_json, timeout_seconds, retry_policy, attempt_limit, read",
+          "calls": 2000,
+          "total_ms": 301.6,
+          "mean_ms": 0.151,
+          "blocks": 21723
+        },
+        {
+          "query": "INSERT INTO task_dependencies (task_id, depends_on_task_id) VALUES ($1::UUID, $2::UUID)",
+          "calls": 3800,
+          "total_ms": 293.2,
+          "mean_ms": 0.077,
+          "blocks": 57075
+        },
+        {
+          "query": "SELECT 1 FROM ONLY \"public\".\"tasks\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY SHARE OF x",
+          "calls": 15500,
+          "total_ms": 274.5,
+          "mean_ms": 0.018,
+          "blocks": 64239
+        },
+        {
+          "query": "SELECT 1 FROM ONLY \"public\".\"workflow_runs\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY SHARE OF x",
+          "calls": 10200,
+          "total_ms": 189.8,
+          "mean_ms": 0.019,
+          "blocks": 30734
+        }
+      ],
+      "scenario": "mixed20",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 0,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 16384,
+          "index_bytes": 65536
+        },
+        "tasks": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 188416,
+          "index_bytes": 114688
+        },
+        "task_attempts": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 155648,
+          "index_bytes": 49152
+        },
+        "task_dependencies": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 163840,
+          "index_bytes": 57344
+        },
+        "task_events": {
+          "n_live_tup": 0,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 212992,
+          "index_bytes": 131072
+        }
+      }
+    },
+    {
+      "runs": 100,
+      "tasks": 2000,
+      "tasks_succeeded": 2000,
+      "attempts": 2000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 2000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 2.437971,
+      "tasks_per_second": 820.3543028198449,
+      "queue_wait_ms": {
+        "n": 2000,
+        "p50": 293.0,
+        "p95": 440.0,
+        "p99": 448.0,
+        "max": 454.0
+      },
+      "execution_ms": {
+        "n": 2000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0,
+        "max": 1.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 2260.2475,
+        "p95": 2278.91405,
+        "p99": 2286.0723700000003,
+        "max": 2286.109
+      },
+      "top_statements": [
+        {
+          "query": "SELECT workflow_runs.id, workflow_runs.tenant_id, workflow_runs.definition_id, workflow_runs.status, workflow_runs.input",
+          "calls": 2000,
+          "total_ms": 3671.2,
+          "mean_ms": 1.836,
+          "blocks": 6060
+        },
+        {
+          "query": "WITH picked AS ( SELECT id FROM tasks WHERE status = 'READY' AND handler = ANY($1::VARCHAR[]) ORDER BY ready_at LIMIT $2",
+          "calls": 1514,
+          "total_ms": 1204.4,
+          "mean_ms": 0.796,
+          "blocks": 195144
+        },
+        {
+          "query": "WITH t AS ( UPDATE tasks SET status = CAST($1 AS varchar), output_json = CASE WHEN CAST($1 AS varchar) = 'SUCCEEDED' THE",
+          "calls": 2000,
+          "total_ms": 1004.6,
+          "mean_ms": 0.502,
+          "blocks": 84075
+        },
+        {
+          "query": "WITH promoted AS ( UPDATE tasks c SET status = $3, ready_at = statement_timestamp(), updated_at = statement_timestamp() ",
+          "calls": 1866,
+          "total_ms": 510.8,
+          "mean_ms": 0.274,
+          "blocks": 93706
+        },
+        {
+          "query": "SELECT 1 FROM ONLY \"public\".\"tasks\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY SHARE OF x",
+          "calls": 15500,
+          "total_ms": 218.6,
+          "mean_ms": 0.014,
+          "blocks": 63187
+        },
+        {
+          "query": "INSERT INTO tasks (id, run_id, task_key, handler, status, input_json, timeout_seconds, retry_policy, attempt_limit, read",
+          "calls": 2000,
+          "total_ms": 191.5,
+          "mean_ms": 0.096,
+          "blocks": 23077
+        },
+        {
+          "query": "SELECT 1 FROM ONLY \"public\".\"workflow_runs\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY SHARE OF x",
+          "calls": 10200,
+          "total_ms": 190.8,
+          "mean_ms": 0.019,
+          "blocks": 30826
+        },
+        {
+          "query": "WITH promoted AS ( UPDATE tasks c SET status = 'READY', ready_at = statement_timestamp(), updated_at = statement_timesta",
+          "calls": 134,
+          "total_ms": 186.8,
+          "mean_ms": 1.394,
+          "blocks": 42446
+        }
+      ],
+      "scenario": "mixed20",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 1,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 110,
+          "n_dead_tup": 137,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 131072,
+          "index_bytes": 65536
+        },
+        "tasks": {
+          "n_live_tup": 2200,
+          "n_dead_tup": 5077,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 1400832,
+          "index_bytes": 475136
+        },
+        "task_attempts": {
+          "n_live_tup": 1645,
+          "n_dead_tup": 249,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 409600,
+          "index_bytes": 286720
+        },
+        "task_dependencies": {
+          "n_live_tup": 4180,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 303104,
+          "index_bytes": 401408
+        },
+        "task_events": {
+          "n_live_tup": 5324,
+          "n_dead_tup": 0,
+          "autovacuum_count": 0,
+          "autoanalyze_count": 0,
+          "table_bytes": 1581056,
+          "index_bytes": 712704
+        }
+      }
+    },
+    {
+      "runs": 100,
+      "tasks": 2000,
+      "tasks_succeeded": 2000,
+      "attempts": 2000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 2000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 2.855901,
+      "tasks_per_second": 700.3043873019409,
+      "queue_wait_ms": {
+        "n": 2000,
+        "p50": 347.0,
+        "p95": 530.0,
+        "p99": 537.0,
+        "max": 543.0
+      },
+      "execution_ms": {
+        "n": 2000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 2.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 2601.304,
+        "p95": 2649.45695,
+        "p99": 2663.06276,
+        "max": 2669.771
+      },
+      "top_statements": [
+        {
+          "query": "SELECT workflow_runs.id, workflow_runs.tenant_id, workflow_runs.definition_id, workflow_runs.status, workflow_runs.input",
+          "calls": 2000,
+          "total_ms": 4766.7,
+          "mean_ms": 2.383,
+          "blocks": 8021
+        },
+        {
+          "query": "WITH picked AS ( SELECT id FROM tasks WHERE status = 'READY' AND handler = ANY($1::VARCHAR[]) ORDER BY ready_at LIMIT $2",
+          "calls": 1527,
+          "total_ms": 1157.6,
+          "mean_ms": 0.758,
+          "blocks": 170853
+        },
+        {
+          "query": "WITH t AS ( UPDATE tasks SET status = CAST($1 AS varchar), output_json = CASE WHEN CAST($1 AS varchar) = 'SUCCEEDED' THE",
+          "calls": 2000,
+          "total_ms": 1047.7,
+          "mean_ms": 0.524,
+          "blocks": 83215
+        },
+        {
+          "query": "WITH promoted AS ( UPDATE tasks c SET status = 'READY', ready_at = statement_timestamp(), updated_at = statement_timesta",
+          "calls": 1606,
+          "total_ms": 504.8,
+          "mean_ms": 0.314,
+          "blocks": 96388
+        },
+        {
+          "query": "INSERT INTO tasks (id, run_id, task_key, handler, status, input_json, timeout_seconds, retry_policy, attempt_limit, read",
+          "calls": 2000,
+          "total_ms": 237.0,
+          "mean_ms": 0.119,
+          "blocks": 25276
+        },
+        {
+          "query": "SELECT $2 FROM ONLY \"public\".\"tasks\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY SHARE OF x",
+          "calls": 15500,
+          "total_ms": 216.8,
+          "mean_ms": 0.014,
+          "blocks": 63489
+        },
+        {
+          "query": "SELECT $2 FROM ONLY \"public\".\"workflow_runs\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY SHARE OF x",
+          "calls": 10200,
+          "total_ms": 204.9,
+          "mean_ms": 0.02,
+          "blocks": 40283
+        },
+        {
+          "query": "INSERT INTO task_dependencies (task_id, depends_on_task_id) VALUES ($1::UUID, $2::UUID)",
+          "calls": 3800,
+          "total_ms": 194.4,
+          "mean_ms": 0.051,
+          "blocks": 57436
+        }
+      ],
+      "scenario": "mixed20",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 2,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 302,
+          "n_dead_tup": 113,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 147456,
+          "index_bytes": 81920
+        },
+        "tasks": {
+          "n_live_tup": 6036,
+          "n_dead_tup": 5465,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 2260992,
+          "index_bytes": 712704
+        },
+        "task_attempts": {
+          "n_live_tup": 4166,
+          "n_dead_tup": 271,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 696320,
+          "index_bytes": 516096
+        },
+        "task_dependencies": {
+          "n_live_tup": 11476,
+          "n_dead_tup": 0,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 565248,
+          "index_bytes": 737280
+        },
+        "task_events": {
+          "n_live_tup": 13383,
+          "n_dead_tup": 0,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 2859008,
+          "index_bytes": 1384448
+        }
+      }
+    },
+    {
+      "runs": 100,
+      "tasks": 2000,
+      "tasks_succeeded": 2000,
+      "attempts": 2000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 2000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 2.436238,
+      "tasks_per_second": 820.937855825252,
+      "queue_wait_ms": {
+        "n": 2000,
+        "p50": 305.0,
+        "p95": 392.0,
+        "p99": 397.0,
+        "max": 403.0
+      },
+      "execution_ms": {
+        "n": 2000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 4.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 2194.794,
+        "p95": 2237.7934999999998,
+        "p99": 2244.79799,
+        "max": 2246.183
+      },
+      "top_statements": [
+        {
+          "query": "SELECT workflow_runs.id, workflow_runs.tenant_id, workflow_runs.definition_id, workflow_runs.status, workflow_runs.input",
+          "calls": 2000,
+          "total_ms": 3906.8,
+          "mean_ms": 1.953,
+          "blocks": 8013
+        },
+        {
+          "query": "WITH picked AS ( SELECT id FROM tasks WHERE status = 'READY' AND handler = ANY($1::VARCHAR[]) ORDER BY ready_at LIMIT $2",
+          "calls": 1529,
+          "total_ms": 1009.8,
+          "mean_ms": 0.66,
+          "blocks": 164448
+        },
+        {
+          "query": "WITH t AS ( UPDATE tasks SET status = CAST($1 AS varchar), output_json = CASE WHEN CAST($1 AS varchar) = 'SUCCEEDED' THE",
+          "calls": 2000,
+          "total_ms": 866.1,
+          "mean_ms": 0.433,
+          "blocks": 83305
+        },
+        {
+          "query": "WITH promoted AS ( UPDATE tasks c SET status = 'READY', ready_at = statement_timestamp(), updated_at = statement_timesta",
+          "calls": 1599,
+          "total_ms": 476.7,
+          "mean_ms": 0.298,
+          "blocks": 94844
+        },
+        {
+          "query": "INSERT INTO tasks (id, run_id, task_key, handler, status, input_json, timeout_seconds, retry_policy, attempt_limit, read",
+          "calls": 2000,
+          "total_ms": 284.1,
+          "mean_ms": 0.142,
+          "blocks": 25427
+        },
+        {
+          "query": "INSERT INTO task_dependencies (task_id, depends_on_task_id) VALUES ($1::UUID, $2::UUID)",
+          "calls": 3800,
+          "total_ms": 261.0,
+          "mean_ms": 0.069,
+          "blocks": 57143
+        },
+        {
+          "query": "SELECT 1 FROM ONLY \"public\".\"tasks\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY SHARE OF x",
+          "calls": 15500,
+          "total_ms": 234.4,
+          "mean_ms": 0.015,
+          "blocks": 63587
+        },
+        {
+          "query": "SELECT 1 FROM ONLY \"public\".\"workflow_runs\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY SHARE OF x",
+          "calls": 10200,
+          "total_ms": 183.9,
+          "mean_ms": 0.018,
+          "blocks": 40903
+        }
+      ],
+      "scenario": "mixed20",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 3,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 402,
+          "n_dead_tup": 330,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 286720,
+          "index_bytes": 114688
+        },
+        "tasks": {
+          "n_live_tup": 8036,
+          "n_dead_tup": 11277,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 3293184,
+          "index_bytes": 950272
+        },
+        "task_attempts": {
+          "n_live_tup": 6137,
+          "n_dead_tup": 194,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 1015808,
+          "index_bytes": 712704
+        },
+        "task_dependencies": {
+          "n_live_tup": 15276,
+          "n_dead_tup": 0,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 761856,
+          "index_bytes": 1056768
+        },
+        "task_events": {
+          "n_live_tup": 19512,
+          "n_dead_tup": 0,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 4243456,
+          "index_bytes": 2039808
+        }
+      }
+    },
+    {
+      "runs": 100,
+      "tasks": 2000,
+      "tasks_succeeded": 2000,
+      "attempts": 2000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 2000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 2.535096,
+      "tasks_per_second": 788.9247586679164,
+      "queue_wait_ms": {
+        "n": 2000,
+        "p50": 329.0,
+        "p95": 409.0,
+        "p99": 413.0,
+        "max": 418.0
+      },
+      "execution_ms": {
+        "n": 2000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 4.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 2321.946,
+        "p95": 2339.2104999999997,
+        "p99": 2344.97571,
+        "max": 2350.293
+      },
+      "top_statements": [
+        {
+          "query": "SELECT workflow_runs.id, workflow_runs.tenant_id, workflow_runs.definition_id, workflow_runs.status, workflow_runs.input",
+          "calls": 2000,
+          "total_ms": 3822.4,
+          "mean_ms": 1.911,
+          "blocks": 8001
+        },
+        {
+          "query": "WITH picked AS ( SELECT id FROM tasks WHERE status = 'READY' AND handler = ANY($1::VARCHAR[]) ORDER BY ready_at LIMIT $2",
+          "calls": 1517,
+          "total_ms": 1089.9,
+          "mean_ms": 0.718,
+          "blocks": 163587
+        },
+        {
+          "query": "WITH t AS ( UPDATE tasks SET status = CAST($1 AS varchar), output_json = CASE WHEN CAST($1 AS varchar) = 'SUCCEEDED' THE",
+          "calls": 2000,
+          "total_ms": 930.6,
+          "mean_ms": 0.465,
+          "blocks": 82626
+        },
+        {
+          "query": "WITH promoted AS ( UPDATE tasks c SET status = 'READY', ready_at = statement_timestamp(), updated_at = statement_timesta",
+          "calls": 1583,
+          "total_ms": 521.0,
+          "mean_ms": 0.329,
+          "blocks": 93400
+        },
+        {
+          "query": "SELECT 1 FROM ONLY \"public\".\"tasks\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY SHARE OF x",
+          "calls": 15500,
+          "total_ms": 211.0,
+          "mean_ms": 0.014,
+          "blocks": 63304
+        },
+        {
+          "query": "SELECT 1 FROM ONLY \"public\".\"workflow_runs\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY SHARE OF x",
+          "calls": 10200,
+          "total_ms": 186.3,
+          "mean_ms": 0.018,
+          "blocks": 40804
+        },
+        {
+          "query": "INSERT INTO task_dependencies (task_id, depends_on_task_id) VALUES ($1::UUID, $2::UUID)",
+          "calls": 3800,
+          "total_ms": 171.4,
+          "mean_ms": 0.045,
+          "blocks": 57138
+        },
+        {
+          "query": "INSERT INTO tasks (id, run_id, task_key, handler, status, input_json, timeout_seconds, retry_policy, attempt_limit, read",
+          "calls": 2000,
+          "total_ms": 167.1,
+          "mean_ms": 0.084,
+          "blocks": 25213
+        }
+      ],
+      "scenario": "mixed20",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 4,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 502,
+          "n_dead_tup": 533,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 360448,
+          "index_bytes": 114688
+        },
+        "tasks": {
+          "n_live_tup": 10036,
+          "n_dead_tup": 16539,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 4530176,
+          "index_bytes": 1212416
+        },
+        "task_attempts": {
+          "n_live_tup": 7883,
+          "n_dead_tup": 303,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 1294336,
+          "index_bytes": 892928
+        },
+        "task_dependencies": {
+          "n_live_tup": 19076,
+          "n_dead_tup": 0,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 999424,
+          "index_bytes": 1400832
+        },
+        "task_events": {
+          "n_live_tup": 25077,
+          "n_dead_tup": 0,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 5537792,
+          "index_bytes": 2719744
+        }
+      }
+    },
+    {
+      "runs": 100,
+      "tasks": 2000,
+      "tasks_succeeded": 2000,
+      "attempts": 2000,
+      "attempt_outcomes": {
+        "SUCCEEDED": 2000
+      },
+      "duplicate_accepted_results": 0,
+      "runs_failed": 0,
+      "wall_seconds": 2.481002,
+      "tasks_per_second": 806.1259120307037,
+      "queue_wait_ms": {
+        "n": 2000,
+        "p50": 306.0,
+        "p95": 386.0,
+        "p99": 391.0,
+        "max": 397.0
+      },
+      "execution_ms": {
+        "n": 2000,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 2.0
+      },
+      "run_e2e_ms": {
+        "n": 100,
+        "p50": 2204.2005,
+        "p95": 2282.57365,
+        "p99": 2291.9462900000003,
+        "max": 2292.767
+      },
+      "top_statements": [
+        {
+          "query": "SELECT workflow_runs.id, workflow_runs.tenant_id, workflow_runs.definition_id, workflow_runs.status, workflow_runs.input",
+          "calls": 2000,
+          "total_ms": 4367.6,
+          "mean_ms": 2.184,
+          "blocks": 8021
+        },
+        {
+          "query": "WITH picked AS ( SELECT id FROM tasks WHERE status = 'READY' AND handler = ANY($1::VARCHAR[]) ORDER BY ready_at LIMIT $2",
+          "calls": 1573,
+          "total_ms": 957.1,
+          "mean_ms": 0.608,
+          "blocks": 164770
+        },
+        {
+          "query": "WITH t AS ( UPDATE tasks SET status = CAST($1 AS varchar), output_json = CASE WHEN CAST($1 AS varchar) = 'SUCCEEDED' THE",
+          "calls": 2000,
+          "total_ms": 858.0,
+          "mean_ms": 0.429,
+          "blocks": 82755
+        },
+        {
+          "query": "WITH promoted AS ( UPDATE tasks c SET status = 'READY', ready_at = statement_timestamp(), updated_at = statement_timesta",
+          "calls": 1586,
+          "total_ms": 435.6,
+          "mean_ms": 0.275,
+          "blocks": 95335
+        },
+        {
+          "query": "SELECT 1 FROM ONLY \"public\".\"tasks\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY SHARE OF x",
+          "calls": 15500,
+          "total_ms": 184.2,
+          "mean_ms": 0.012,
+          "blocks": 63365
+        },
+        {
+          "query": "INSERT INTO task_dependencies (task_id, depends_on_task_id) VALUES ($1::UUID, $2::UUID)",
+          "calls": 3800,
+          "total_ms": 181.6,
+          "mean_ms": 0.048,
+          "blocks": 57128
+        },
+        {
+          "query": "INSERT INTO tasks (id, run_id, task_key, handler, status, input_json, timeout_seconds, retry_policy, attempt_limit, read",
+          "calls": 2000,
+          "total_ms": 175.1,
+          "mean_ms": 0.088,
+          "blocks": 25420
+        },
+        {
+          "query": "SELECT 1 FROM ONLY \"public\".\"workflow_runs\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY SHARE OF x",
+          "calls": 10200,
+          "total_ms": 156.9,
+          "mean_ms": 0.015,
+          "blocks": 40823
+        }
+      ],
+      "scenario": "mixed20",
+      "workers": 4,
+      "concurrency": 4,
+      "trial": 5,
+      "between_trials": "none",
+      "db_before": {
+        "workflow_runs": {
+          "n_live_tup": 602,
+          "n_dead_tup": 710,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 368640,
+          "index_bytes": 122880
+        },
+        "tasks": {
+          "n_live_tup": 12036,
+          "n_dead_tup": 22541,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 5652480,
+          "index_bytes": 1523712
+        },
+        "task_attempts": {
+          "n_live_tup": 9931,
+          "n_dead_tup": 316,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 1572864,
+          "index_bytes": 1163264
+        },
+        "task_dependencies": {
+          "n_live_tup": 22876,
+          "n_dead_tup": 0,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 1228800,
+          "index_bytes": 1736704
+        },
+        "task_events": {
+          "n_live_tup": 31356,
+          "n_dead_tup": 0,
+          "autovacuum_count": 1,
+          "autoanalyze_count": 1,
+          "table_bytes": 6848512,
+          "index_bytes": 3293184
+        }
+      }
+    }
+  ]
+}

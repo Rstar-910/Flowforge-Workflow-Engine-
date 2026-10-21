@@ -114,6 +114,10 @@ dependencies. The domain package has no I/O.
 The global lock order is: own RUNNING task row, then run row, then other task rows.
 ADR 0005 explains why this order cannot deadlock.
 
+Worker and scheduler sessions run with `enable_bitmapscan = off`, and the hot queries
+are written so their efficient plan doesn't depend on planner statistics (ADR 0012).
+Their cost therefore stays flat on new, truncated, or not-yet-analyzed tables.
+
 There are no Python-level locks between processes. No transaction is open while a
 handler runs. `idle_in_transaction_session_timeout` (60 s) and `statement_timeout`
 (15 s) are set on every connection as a backstop.

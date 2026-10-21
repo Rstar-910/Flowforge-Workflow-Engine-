@@ -263,19 +263,22 @@ overhead. Full method, per-trial data, and caveats are in
 
 | workload (3 trials each) | workers × slots | tasks/s | queue wait p95 |
 |---|---|---|---|
-| linear chain of 10, 100 runs (burst) | 4 × 4 | 846–889 | 99–108 ms |
-| fan-out of 50 + join, 20 runs (burst) | 4 × 8 | 680–713 | 1.0–1.2 s |
-| random 20-task DAG, 100 runs | 4 × 4 | 413–867 (degraded across trials, cause not yet diagnosed) | 0.37–0.96 s |
-| 30 % transient failures with retries | 4 × 4 | 201–257 | 0.9–1.5 s |
+| linear chain of 10, 100 runs (burst) | 4 × 4 | 847–928 | 95–109 ms |
+| fan-out of 50 + join, 20 runs (burst) | 4 × 8 | 666–757 | 1.1–1.2 s |
+| random 20-task DAG, 100 runs | 4 × 4 | 729–836 | 0.40–0.50 s |
+| 30 % transient failures with retries | 4 × 4 | 178–345 | 0.83–0.87 s |
 
-- HTTP submission, 1 API process with 16 clients and a 20-task definition: 222–257
-  runs/s, with p95 latency of 101–143 ms.
+- HTTP submission, 1 API process with 16 clients and a 20-task definition: 252–288
+  runs/s, with p95 latency of 82–96 ms.
 - Recovery from SIGKILL, from the kill until the task re-executes, with a 5 s lease:
-  6.1–6.4 s.
-- Duplicate accepted results: 0 in every trial.
-- A profiling-driven optimisation that reduced database round trips (ADR 0011) raised
-  linear throughput from about 300 to about 870 tasks/s, and wide fan-out from about
-  150 to about 700 tasks/s.
+  6.3 s.
+- 28,560 of 28,560 tasks succeeded, with 0 duplicate accepted results.
+- Two profiling-driven optimisations made these numbers:
+  - Fewer database round trips (ADR 0011): linear chains went from about 300 to about
+    870 tasks/s.
+  - Query plans that don't depend on planner statistics (ADR 0012): this removed the
+    main cause of a 52% throughput drop across benchmark trials. About ±10% variation
+    between trials remains.
 
 ## Configuration
 
