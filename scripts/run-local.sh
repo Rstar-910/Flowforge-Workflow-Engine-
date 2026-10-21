@@ -37,6 +37,7 @@ for i in $(seq 1 "$WORKERS"); do
     --worker-id "worker-$i" >"$LOG_DIR/worker-$i.log" 2>&1 & pids+=($!)
 done
 
+echo "dashboard: http://127.0.0.1:8000/ui/   (key: dev-user-key or dev-admin-key)"
 echo "API:       http://127.0.0.1:8000/docs"
 echo "metrics:   :8000/metrics (api), :9101 (scheduler), :9111.. (workers)"
 echo "logs:      $LOG_DIR/  (worker PIDs: ${pids[*]:2})"

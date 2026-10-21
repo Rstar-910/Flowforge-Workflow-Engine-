@@ -14,6 +14,7 @@ from flowforge import __version__
 from flowforge.api.errors import install_error_handlers
 from flowforge.api.middleware import RequestContextMiddleware
 from flowforge.api.routes import ops, v1
+from flowforge.api.ui import mount_dashboard
 from flowforge.config import Settings
 from flowforge.db.session import create_engine
 from flowforge.worker.registry import load_handler_modules
@@ -76,6 +77,7 @@ def create_app(settings: Settings, *, engine: AsyncEngine | None = None) -> Fast
     install_error_handlers(app)
     app.include_router(v1)
     app.include_router(ops)
+    mount_dashboard(app)
     app.add_middleware(
         RequestContextMiddleware,
         max_body_bytes=settings.max_request_bytes,

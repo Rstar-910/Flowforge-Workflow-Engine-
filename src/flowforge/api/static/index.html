@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlowForge Dashboard</title>
+  <link rel="stylesheet" href="app.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='3' cy='8' r='2.5' fill='%233b82f6'/%3E%3Ccircle cx='13' cy='3.5' r='2.5' fill='%2316a34a'/%3E%3Ccircle cx='13' cy='12.5' r='2.5' fill='%2316a34a'/%3E%3Cpath d='M5 8L11 4M5 8L11 12' stroke='%23888' stroke-width='1.2'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <span>FlowForge</span>
+      <span class="muted brand-sub">workflow engine</span>
+    </div>
+    <div class="topbar-right" id="controls" hidden>
+      <span id="live" class="live" title="Auto-refresh"><span class="dot"></span><span id="live-text">paused</span></span>
+      <button id="toggle-refresh" class="btn btn-ghost" type="button">Pause</button>
+      <button id="open-new-run" class="btn" type="button">New run</button>
+      <button id="sign-out" class="btn btn-ghost" type="button">Change key</button>
+    </div>
+  </header>
+
+  <section id="login" class="login" hidden>
+    <form id="login-form" class="card login-card" autocomplete="off">
+      <h1>Connect to FlowForge</h1>
+      <p class="muted">Enter an API key (header <code>X-API-Key</code>). It is kept only for this browser tab.</p>
+      <label for="api-key">API key</label>
+      <input id="api-key" type="password" required spellcheck="false" placeholder="e.g. dev-user-key">
+      <p id="login-error" class="error" hidden></p>
+      <button class="btn" type="submit">Connect</button>
+      <p class="muted small">Local development keys are in <code>.env.example</code>. Admin keys also unlock the worker panel and manual retries.</p>
+    </form>
+  </section>
+
+  <main id="app" class="layout" hidden>
+    <section class="stats" id="stats" aria-label="Overview"></section>
+
+    <aside class="card runs-panel" aria-label="Runs">
+      <div class="panel-head">
+        <h2>Runs</h2>
+        <select id="status-filter" aria-label="Filter by status">
+          <option value="">All</option>
+          <option>PENDING</option><option>RUNNING</option><option>SUCCEEDED</option>
+          <option>FAILED</option><option>CANCELLING</option><option>CANCELLED</option>
+        </select>
+      </div>
+      <ul id="runs" class="runs"></ul>
+      <button id="more-runs" class="btn btn-ghost btn-block" type="button" hidden>Load more</button>
+    </aside>
+
+    <section class="detail" id="detail" aria-label="Run detail">
+      <div class="card empty-state" id="no-run">
+        <h2>No run selected</h2>
+        <p class="muted">Pick a run on the left, or start one with <strong>New run</strong>.</p>
+      </div>
+      <div id="run-view" hidden>
+        <div class="card run-head">
+          <div>
+            <div class="run-title"><span id="run-status" class="badge"></span><h2 id="run-name"></h2></div>
+            <div class="mono muted small" id="run-id"></div>
+            <dl class="facts" id="run-facts"></dl>
+            <p id="run-failure" class="error" hidden></p>
+          </div>
+          <div class="run-actions">
+            <button id="cancel-run" class="btn btn-danger" type="button">Cancel run</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="panel-head"><h2>Dependency graph</h2><div class="legend" id="legend"></div></div>
+          <div class="graph-wrap" id="graph"></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="panel-head"><h2>Tasks</h2></div>
+            <div class="table-wrap"><table class="table" id="tasks-table"></table></div>
+          </div>
+          <div class="card" id="task-detail">
+            <div class="panel-head"><h2 id="task-detail-title">Attempts</h2>
+              <button id="retry-task" class="btn btn-small" type="button" hidden>Retry task</button></div>
+            <div id="task-detail-body"><p class="muted">Select a task in the graph or table to see its attempt history.</p></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="panel-head"><h2>Events</h2><span class="muted small" id="events-count"></span></div>
+          <ol class="events" id="events"></ol>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card workers-panel" id="workers-panel" hidden aria-label="Workers">
+      <div class="panel-head"><h2>Workers</h2><span class="muted small">admin</span></div>
+      <div class="table-wrap"><table class="table" id="workers-table"></table></div>
+    </aside>
+  </main>
+
+  <dialog id="new-run-dialog" class="dialog">
+    <form id="new-run-form" method="dialog">
+      <h2>Start a run</h2>
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" data-tab="existing" role="tab">Existing definition</button>
+        <button type="button" class="tab" data-tab="register" role="tab">Register definition</button>
+      </div>
+      <div data-pane="existing">
+        <label for="def-select">Workflow definition</label>
+        <select id="def-select"></select>
+      </div>
+      <div data-pane="register" hidden>
+        <label for="def-json">Definition JSON</label>
+        <textarea id="def-json" rows="9" spellcheck="false" placeholder='{"name": "my-flow", "version": 1, "tasks": [...]}'></textarea>
+        <p class="muted small">Examples live in <code>examples/</code>. Re-registering identical content is idempotent.</p>
+      </div>
+      <label for="run-input">Run input (JSON object)</label>
+      <textarea id="run-input" rows="4" spellcheck="false">{}</textarea>
+      <label for="idem-key">Idempotency key <span class="muted">(optional)</span></label>
+      <input id="idem-key" spellcheck="false" placeholder="e.g. order-42">
+      <p id="new-run-error" class="error" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-ghost" id="new-run-cancel">Close</button>
+        <button type="submit" class="btn" id="new-run-submit">Start run</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

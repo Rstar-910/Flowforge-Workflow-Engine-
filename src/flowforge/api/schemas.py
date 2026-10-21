@@ -147,3 +147,29 @@ class StatusOut(BaseModel):
 class HealthOut(BaseModel):
     status: str
     checks: dict[str, str] = Field(default_factory=dict)
+
+
+class StatsOut(BaseModel):
+    runs: dict[str, int]
+    active_tasks: dict[str, int]
+
+
+class WorkerOut(BaseModel):
+    worker_id: str
+    hostname: str
+    pid: int
+    version: str
+    concurrency: int
+    handlers: list[str]
+    started_at: datetime
+    last_heartbeat_at: datetime
+    stopped_at: datetime | None
+    heartbeat_age_seconds: float
+    running_tasks: int
+    # "live": heartbeat within one lease period; "silent": registered but not
+    # heartbeating (crashed, paused or partitioned); "stopped": shut down cleanly.
+    health: str
+
+
+class WorkerList(BaseModel):
+    items: list[WorkerOut]

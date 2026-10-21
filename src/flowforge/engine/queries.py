@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import and_, func, or_, select, tuple_
+from sqlalchemy import and_, func, or_, select, text, tuple_
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from flowforge.engine.sql import attempts_t, defs_t, deps_t, events_t, runs_t, tasks_t
@@ -223,3 +223,50 @@ async def list_events(
         if task_id is not None:
             q = q.where(or_(events_t.c.task_id == task_id))
         return [dict(r) for r in (await conn.execute(q)).mappings()]
+
+
+_RUN_COUNTS_SQL = text(
+    "SELECT status, count(*) FROM workflow_runs WHERE tenant_id = :tenant GROUP BY status"
+)
+_ACTIVE_TASK_COUNTS_SQL = text(
+    """
+    SELECT t.status, count(*)
+      FROM tasks t JOIN workflow_runs r ON r.id = t.run_id
+     WHERE r.tenant_id = :tenant
+       AND r.status IN ('PENDING', 'RUNNING', 'CANCELLING')
+       AND t.status IN ('BLOCKED', 'READY', 'RUNNING', 'RETRY_WAIT')
+     GROUP BY t.status
+    """
+)
+
+
+async def tenant_stats(engine: AsyncEngine, tenant_id: str) -> dict[str, dict[str, int]]:
+    """Run counts by status and active-task counts by status, for one tenant."""
+    async with engine.connect() as conn:
+        runs = {s: int(n) for s, n in (await conn.execute(_RUN_COUNTS_SQL, {"tenant": tenant_id}))}
+        tasks = {
+            s: int(n)
+            for s, n in (await conn.execute(_ACTIVE_TASK_COUNTS_SQL, {"tenant": tenant_id}))
+        }
+    return {"runs": runs, "active_tasks": tasks}
+
+
+_WORKERS_SQL = text(
+    """
+    SELECT w.worker_id, w.hostname, w.pid, w.version, w.concurrency, w.handlers,
+           w.started_at, w.last_heartbeat_at, w.stopped_at,
+           extract(epoch FROM (statement_timestamp() - w.last_heartbeat_at))::float8
+               AS heartbeat_age_seconds,
+           (SELECT count(*) FROM tasks t
+             WHERE t.lease_owner = w.worker_id AND t.status = 'RUNNING') AS running_tasks
+      FROM workers w
+     ORDER BY w.stopped_at IS NOT NULL, w.started_at DESC
+     LIMIT :limit
+    """
+)
+
+
+async def list_workers(engine: AsyncEngine, *, limit: int) -> list[dict[str, Any]]:
+    """Worker registry (infrastructure-wide, not tenant data: admin only)."""
+    async with engine.connect() as conn:
+        return [dict(r) for r in (await conn.execute(_WORKERS_SQL, {"limit": limit})).mappings()]

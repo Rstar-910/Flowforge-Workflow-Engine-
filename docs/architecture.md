@@ -188,7 +188,10 @@ JSON values (inputs and outputs) are JSONB with size limits:
 - **Tracing:** spans use the OpenTelemetry API. The submitting request's `traceparent`
   is stored on the run, and worker spans continue that trace.
 - **Inspection:** the API exposes runs, tasks (with dependencies), attempts, and
-  paginated events. `flowforge inspect <run_id>` prints a run's attempt table straight
+  paginated events, plus `GET /v1/stats` (tenant-scoped counts) and `GET /v1/workers`
+  (admin only; health is `live`, `silent` after one lease without a heartbeat, or
+  `stopped`). The dashboard at `/ui` is built only on these endpoints: static files in
+  `src/flowforge/api/static/`, served with a strict CSP by `flowforge/api/ui.py`. `flowforge inspect <run_id>` prints a run's attempt table straight
   from the database.
 - **Health:** `/health/live` checks the process. `/health/ready` checks database
   connectivity and reports the schema revision.

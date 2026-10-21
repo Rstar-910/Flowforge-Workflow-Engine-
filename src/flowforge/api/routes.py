@@ -24,9 +24,12 @@ from flowforge.api.schemas import (
     RunList,
     RunOut,
     StartRunRequest,
+    StatsOut,
     StatusOut,
     TaskList,
     TaskOut,
+    WorkerList,
+    WorkerOut,
 )
 from flowforge.domain.definition import WorkflowDefinitionSpec
 from flowforge.domain.states import RunStatus
@@ -266,6 +269,33 @@ async def retry_task(request: Request, principal: AdminPrincipal, task_id: uuid.
         requested_by=principal.key_id,
     )
     return StatusOut(id=task_id, status=new_status)
+
+
+@v1.get("/stats", response_model=StatsOut, summary="Run and active-task counts for your tenant")
+async def stats(request: Request, principal: CurrentPrincipal) -> StatsOut:
+    return StatsOut(**await queries.tenant_stats(_engine(request), principal.tenant))
+
+
+@v1.get(
+    "/workers",
+    response_model=WorkerList,
+    summary="Worker registry and heartbeat health (admin only)",
+    description="Workers are shared infrastructure, not tenant data, so this requires admin.",
+)
+async def list_workers(
+    request: Request,
+    principal: AdminPrincipal,
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+) -> WorkerList:
+    rows = await queries.list_workers(_engine(request), limit=limit)
+    lease = request.app.state.settings.lease_seconds
+
+    def health(r: dict[str, Any]) -> str:
+        if r["stopped_at"] is not None:
+            return "stopped"
+        return "live" if r["heartbeat_age_seconds"] < lease else "silent"
+
+    return WorkerList(items=[WorkerOut(**r, health=health(r)) for r in rows])
 
 
 @v1.get("/handlers", summary="List handler names this API accepts in definitions")

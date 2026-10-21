@@ -52,6 +52,8 @@ listed as a limitation.
     database latency, workers, and HTTP.
   - OpenTelemetry spans, with trace context propagated from the API to workers.
   - Health and readiness probes.
+- **Dashboard** at `/ui`: live runs, an animated dependency graph, attempt history,
+  events, worker health, and start / cancel / retry actions.
 - **Operations**: Alembic migrations, Docker Compose, a `flowforge inspect` CLI,
   failure-injection points, a benchmark harness, and GitHub Actions CI.
 
@@ -114,6 +116,34 @@ uv run flowforge worker --concurrency 4 --worker-id worker-2
 To run the whole stack in containers instead:
 `docker compose -f deployments/docker-compose.yml --profile app up --build`.
 
+### Dashboard
+
+Open **http://127.0.0.1:8000/ui/** and enter an API key (`dev-user-key`, or
+`dev-admin-key` to also see workers and retry failed tasks). The page refreshes every
+2 s and shows:
+
+- runs by status, the live task queue, and worker health;
+- each run's dependency graph, with nodes coloured by state as tasks move through
+  BLOCKED → READY → RUNNING → SUCCEEDED;
+- every attempt per task (worker, outcome, queue wait, duration, error) and the event
+  timeline;
+- buttons to start a run (or register a definition), cancel a run, and retry a failed
+  task.
+
+![Dashboard during crash recovery](docs/images/dashboard-recovery.png)
+
+*Above: task C's first attempt on worker-3 ended `LEASE_EXPIRED` after the worker was
+SIGKILLed, and attempt 2 is running on worker-2. D waits on C. Below: a failed run.
+`validate` failed permanently, its dependents are `UPSTREAM_FAILED`, the independent
+`audit` branch still finished, and an admin can retry.*
+
+![Dashboard showing a failed run](docs/images/dashboard-failed-run.png)
+
+The dashboard is plain HTML, CSS and JavaScript shipped inside the package (no CDN, no
+build step). It talks only to this API, keeps the key in `sessionStorage` for the tab,
+and is served with a strict Content-Security-Policy. API data is never inserted as
+HTML.
+
 ### Example API calls
 
 ```bash
@@ -139,6 +169,8 @@ curl -s -X POST -H "$H" http://127.0.0.1:8000/v1/runs/$RUN/cancel               
 curl -s -X POST -H 'X-API-Key: dev-admin-key' http://127.0.0.1:8000/v1/tasks/$TASK/retry  # admin only
 
 # 5. operations
+curl -s -H "$H" http://127.0.0.1:8000/v1/stats                          # run / queue counts
+curl -s -H 'X-API-Key: dev-admin-key' http://127.0.0.1:8000/v1/workers  # worker health (admin)
 curl -s http://127.0.0.1:8000/health/ready
 curl -s http://127.0.0.1:8000/metrics | grep flowforge_
 uv run flowforge inspect $RUN            # attempt table straight from the database
@@ -275,7 +307,7 @@ These are explained in detail in [docs/failure-model.md](docs/failure-model.md).
 - Thread handlers cannot be interrupted. A timed-out thread keeps a worker slot until
   it returns.
 - Not implemented: queue timeouts, workflow deadlines, compensation/sagas, scheduled or
-  recurring workflows, retention of old events, a global rate limiter, a dashboard UI.
+  recurring workflows, retention of old events, a global rate limiter.
 - Tested on one host, with PostgreSQL in Docker. No multi-host partitions and no
   PostgreSQL failover.
 
@@ -290,7 +322,6 @@ These are deliberately deferred until measurements justify them:
 - Compensation steps.
 - Per-tenant fairness and quotas.
 - A typed client SDK.
-- A dashboard.
 
 ## Repository layout
 
