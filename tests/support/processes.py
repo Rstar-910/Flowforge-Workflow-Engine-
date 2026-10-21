@@ -117,6 +117,14 @@ def process_group(tmp: Path, env: dict[str, str]) -> Iterator[ProcessGroup]:
     group = ProcessGroup(tmp, env)
     try:
         yield group
+    except BaseException:
+        # A failing process test is only diagnosable from the processes' own logs (CI keeps
+        # no tmp files), so put the tail of each one into the test report.
+        for p in group.procs:
+            tail = p.output().splitlines()[-40:]
+            sys.stderr.write(f"\n----- last {len(tail)} lines of {p.log_path.name} -----\n")
+            sys.stderr.write("\n".join(tail) + "\n")
+        raise
     finally:
         group.close()
 

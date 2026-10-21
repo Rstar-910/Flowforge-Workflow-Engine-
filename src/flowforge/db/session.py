@@ -104,6 +104,8 @@ async def retry_if_connection_was_dead[T](op: Callable[[], Awaitable[T]], compon
     lease renewal (idempotent), fenced completion (recognises its own committed
     result), and scheduler sweeps (each step re-checks state under lock).
     """
+    import logging
+
     from flowforge.observability import metrics
 
     try:
@@ -112,4 +114,8 @@ async def retry_if_connection_was_dead[T](op: Callable[[], Awaitable[T]], compon
         if not exc.connection_invalidated:
             raise
         metrics.DB_RECONNECTS.labels(component).inc()
+        logging.getLogger(__name__).warning(
+            "connection closed by the server; retrying once on a fresh connection (%s)",
+            type(exc.orig).__name__ if exc.orig is not None else type(exc).__name__,
+        )
         return await op()

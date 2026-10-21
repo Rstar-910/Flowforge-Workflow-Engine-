@@ -485,11 +485,19 @@ async def test_stale_worker_after_scheduler_restart_and_reconnect(db, registry, 
 async def test_server_side_session_kills_during_a_workflow(db, registry, tmp_path, env):
     """PostgreSQL repeatedly terminates every worker session (as a server restart or an
     admin's pg_terminate_backend would), rolling back in-flight claims and commits.
-    The workflow must still complete, with no duplicate or lost results."""
+    The workflow must still complete, with no duplicate or lost results.
+
+    Kills come in waves at a FIXED cadence (every 100 ms), independent of how fast this
+    machine answers queries. An earlier version looped as fast as its own queries
+    returned: on CI's local, low-latency PostgreSQL that became a continuous storm that
+    killed every new session while it was still connecting, so workers could never even
+    register (they correctly backed off). No client can make progress in that regime;
+    it is a different scenario from "sessions get terminated repeatedly".
+    """
     name = "ff-worker-under-test"
     n = 60
     tasks = [task("root")] + [
-        task(f"leaf{i:02d}", "sleep", ["root"], input={"seconds": 0.02}, max_attempts=20)
+        task(f"leaf{i:02d}", "sleep", ["root"], input={"seconds": 0.1}, max_attempts=20)
         for i in range(n)
     ]
     tasks.append(task("join", "noop", [f"leaf{i:02d}" for i in range(n)]))
@@ -503,6 +511,7 @@ async def test_server_side_session_kills_during_a_workflow(db, registry, tmp_pat
             return (await run_status(db, run_id)) in ("SUCCEEDED", "FAILED")
 
         deadline = time.monotonic() + 60  # a time bound, so a liveness bug fails fast
+        next_wave = time.monotonic()
         while not await done():
             assert time.monotonic() < deadline, f"no completion within 60 s ({kills} kills)"
             async with db.connect() as conn:
@@ -517,11 +526,18 @@ async def test_server_side_session_kills_during_a_workflow(db, registry, tmp_pat
                         )
                     ).scalar_one()
                 )
-            await asyncio.sleep(0.02)
+            next_wave += 0.1
+            await asyncio.sleep(max(0.0, next_wave - time.monotonic()))
         logs = "".join(w.output() for w in workers)
     assert await run_status(db, run_id) == "SUCCEEDED"
     interrupted = sum(
-        logs.count(marker) for marker in ("claim failed", "commit failed", "lease renewal failed")
+        logs.count(marker)
+        for marker in (
+            "connection closed by the server",
+            "claim failed",
+            "commit failed",
+            "lease renewal failed",
+        )
     )
     # Evidence the kills hit live operations, not just idle pooled connections.
     assert interrupted > 0, f"{kills} kills never interrupted a claim/commit/renewal"
