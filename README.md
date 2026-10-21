@@ -177,7 +177,8 @@ timeout can kill it.
 ```bash
 uv run pytest -q                 # everything (unit, integration, concurrency, failure injection)
 uv run pytest -q tests/unit      # no database needed
-uv run ruff check . && uv run ruff format --check . && uv run mypy   # static checks (mypy --strict)
+uv sync --extra otel && uv run ruff check . && uv run ruff format --check . && uv run mypy
+                                 # static checks (mypy --strict; the otel extra is type-checked too)
 ```
 
 Integration tests create and recreate a dedicated database, `flowforge_test`, on the
