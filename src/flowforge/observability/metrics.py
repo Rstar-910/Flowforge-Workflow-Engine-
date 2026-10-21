@@ -100,6 +100,11 @@ DB_QUERY_DURATION = Histogram(
 DB_ERRORS = Counter(
     "flowforge_database_errors_total", "Database errors by component.", ["component"]
 )
+RETENTION_DELETED = Counter(
+    "flowforge_retention_deleted_total",
+    "Rows removed by retention, by kind (runs, events, workers).",
+    ["kind"],
+)
 SCHEDULER_CYCLE = Histogram(
     "flowforge_scheduler_cycle_duration_seconds",
     "Duration of one scheduler reconciliation cycle.",

@@ -123,3 +123,23 @@ async def test_fail_until_handler_raises_retryable():
     c2 = ctx(attempt=2)
     c2.input = builtin.FailInput(fail_times=1)
     assert await builtin.fail_until(c2) == {"succeeded_on_attempt": 2}
+
+
+async def test_cancelled_process_handler_never_outlives_cancellation():
+    """Regression: a second cancellation during cleanup used to orphan the child process."""
+    import multiprocessing
+
+    ex = HandlerExecutor(1)
+    spec = HandlerRegistry().register("ps", builtin.process_sleep, isolation="process")
+    task = asyncio.create_task(ex.run(spec, ctx({"seconds": 30}), timeout=60))
+    for _ in range(100):  # wait until the child is running
+        if multiprocessing.active_children():
+            break
+        await asyncio.sleep(0.05)
+    assert multiprocessing.active_children(), "handler process never started"
+    task.cancel()  # e.g. worker shutdown
+    await asyncio.sleep(0)  # cleanup has started
+    task.cancel()  # e.g. a teardown timeout cancels again
+    await asyncio.gather(task, return_exceptions=True)
+    await asyncio.sleep(1.5)  # shielded reaping finishes in the background
+    assert [p for p in multiprocessing.active_children() if p.is_alive()] == []

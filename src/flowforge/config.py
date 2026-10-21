@@ -55,6 +55,17 @@ class Settings(BaseSettings):
     scheduler_interval_seconds: float = Field(default=1.0, gt=0)
     scheduler_batch_size: int = Field(default=500, ge=1)
 
+    # Retention (run by the scheduler). Deleting history is opt-in: None = keep forever.
+    # Events of finished runs older than this are deleted; runs, tasks and attempts stay.
+    event_retention_days: float | None = Field(default=None, gt=0)
+    # Finished runs older than this are deleted with all their tasks, attempts, events
+    # and idempotency records. This is also the idempotency-key window.
+    run_retention_days: float | None = Field(default=None, gt=0)
+    # Stopped or silent workers are removed from the registry after this long.
+    worker_retention_hours: float = Field(default=168.0, gt=0)
+    retention_interval_seconds: float = Field(default=60.0, gt=0)
+    retention_batch_size: int = Field(default=100, ge=1, le=10_000)
+
     metrics_port: int | None = None
 
     # Failure injection is only honoured when explicitly enabled; see flowforge.faults.

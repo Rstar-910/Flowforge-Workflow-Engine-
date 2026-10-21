@@ -115,6 +115,8 @@ A lease is a failure *detector*, not a kill switch:
 | Handler timeout | `async`: interrupted. `process`: killed. `thread`: abandoned and counted as a zombie against capacity (ADR 0008). The attempt is `TIMED_OUT` and retried if the policy allows. | `test_execution_timeout_async_and_process`, `test_thread_timeout_counts_zombie_until_thread_returns` |
 | Cancellation during execution | See `state-machines.md`. Cooperative handlers end CANCELLED. Uncooperative ones record their true outcome, and the run still ends CANCELLED. | `test_cancel_run_with_ready_blocked_and_running_tasks`, `test_cancel_with_uncooperative_handler_waits_for_completion` |
 | Duplicate submissions | Same key and same body return the existing run. Same key with a different body gets 409. | concurrency and API tests |
+| Retention runs while an admin retries a FAILED run | Retention skips run rows locked by another transaction (`SKIP LOCKED`) and never touches active runs; a retried run clears its `events_pruned_at` marker. | `test_runs_locked_by_another_transaction_are_skipped`, `test_active_runs_are_never_deleted_however_old`, `test_manual_retry_clears_the_pruned_marker` |
+| Process-isolated handler cancelled twice (shutdown plus a teardown timeout) | The child process is signalled before any await, and reaping is shielded from further cancellation, so the handler never outlives its cancellation. | `test_cancelled_process_handler_never_outlives_cancellation` (a mutation check showed the old code orphaned the child) |
 | Bug or manual database edit leaves a run inconsistent | The scheduler reconciler re-applies progression. | `test_reconciler_repairs_progression_after_manual_db_edit` |
 
 ## Known limitations and open risks
@@ -137,8 +139,11 @@ A lease is a failure *detector*, not a kill switch:
 - **Lease expiry while the database is down for everyone.** If the scheduler also cannot
   reach PostgreSQL, nothing is recovered until the database returns. Workers that can
   reconnect then commit normally, provided their attempt is still current.
-- **Events table growth.** `task_events` is append-only and never pruned. A retention
-  job or partitioning is future work, to be added when volume justifies it.
+- **History growth is bounded only if retention is enabled.** It is opt-in (ADR 0013).
+  With `FLOWFORGE_EVENT_RETENTION_DAYS` and `FLOWFORGE_RUN_RETENTION_DAYS` unset, runs
+  and events are kept forever. Once a run is deleted, its idempotency key is reusable,
+  so **the idempotency window equals the run retention period**. Partitioning
+  `task_events` is not implemented.
 - **Queue timeout and workflow deadline** (spec section 11) are not implemented. Only
   execution timeouts and lease timeouts exist.
 - **Compensation / sagas** are not implemented.

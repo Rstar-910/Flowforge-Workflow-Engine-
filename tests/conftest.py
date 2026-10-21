@@ -120,3 +120,24 @@ def registry():  # type: ignore[no-untyped-def]
     from flowforge.worker.registry import default_registry
 
     return default_registry
+
+
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    """Opt-in diagnostic for a rare hang during interpreter exit (seen locally, not in CI).
+
+    With FLOWFORGE_TEST_EXIT_WATCHDOG=<seconds>, a process still alive that long after
+    the session ends dumps every thread's stack to stderr. It is armed from atexit
+    because pytest's own faulthandler plugin cancels pending dumps at unconfigure.
+    """
+    seconds = os.environ.get("FLOWFORGE_TEST_EXIT_WATCHDOG")
+    if not seconds:
+        return
+    import atexit
+    import faulthandler
+    import sys
+
+    def arm() -> None:
+        faulthandler.enable(file=sys.__stderr__, all_threads=True)
+        faulthandler.dump_traceback_later(float(seconds), repeat=True, file=sys.__stderr__)
+
+    atexit.register(arm)

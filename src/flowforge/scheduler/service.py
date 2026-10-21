@@ -6,7 +6,8 @@ Each cycle (all state lives in PostgreSQL; the scheduler keeps none):
 2. RUNNING tasks whose lease expired -> RETRY_WAIT / READY / FAILED / CANCELLED.
 3. Every ``reconcile_every`` cycles: repair runs whose progression is out of
    date (safety net; normally a no-op).
-4. Sample queue-depth and worker-health gauges.
+4. Every ``retention_interval_seconds``: apply retention (engine/retention.py).
+5. Sample queue-depth and worker-health gauges.
 
 Running several schedulers is safe (see engine/recovery.py) but not useful.
 """
@@ -28,6 +29,7 @@ from flowforge.engine.recovery import (
     recover_expired_leases,
     sample_gauges,
 )
+from flowforge.engine.retention import RetentionStats, apply_retention
 from flowforge.observability import metrics
 from flowforge.observability.logging import log_event
 from flowforge.worker.runtime import DB_ERRORS
@@ -40,6 +42,7 @@ class CycleStats:
     retries_promoted: int = 0
     leases_recovered: int = 0
     runs_reconciled: int = 0
+    retention: RetentionStats | None = None
 
 
 class Scheduler:
@@ -48,6 +51,7 @@ class Scheduler:
         self.settings = settings
         self.reconcile_every = max(1, reconcile_every)
         self.cycles = 0
+        self._last_retention = float("-inf")
 
     async def cycle(self, *, reconcile: bool | None = None) -> CycleStats:
         start = time.perf_counter()
@@ -57,6 +61,10 @@ class Scheduler:
         stats.leases_recovered = len(await recover_expired_leases(self.engine, limit=batch))
         if reconcile if reconcile is not None else self.cycles % self.reconcile_every == 0:
             stats.runs_reconciled = await reconcile_runs(self.engine, limit=batch)
+        now = time.monotonic()
+        if now - self._last_retention >= self.settings.retention_interval_seconds:
+            self._last_retention = now
+            stats.retention = await apply_retention(self.engine, self.settings)
         await sample_gauges(self.engine, lease_seconds=self.settings.lease_seconds)
         self.cycles += 1
         metrics.SCHEDULER_CYCLE.observe(time.perf_counter() - start)

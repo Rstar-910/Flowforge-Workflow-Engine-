@@ -286,7 +286,13 @@ async def test_cancel_and_admin_retry_via_api(client, db, settings, registry):
 async def test_health_metrics_and_request_ids(client):
     assert (await client.get("/health/live")).json()["status"] == "ok"
     ready = await client.get("/health/ready")
-    assert ready.status_code == 200 and ready.json()["checks"]["schema_version"] == "0001"
+    from alembic.config import Config
+    from alembic.script import ScriptDirectory
+
+    from tests.conftest import ROOT
+
+    head = ScriptDirectory.from_config(Config(str(ROOT / "alembic.ini"))).get_current_head()
+    assert ready.status_code == 200 and ready.json()["checks"]["schema_version"] == head
     r = await client.get("/v1/runs", headers={**USER, "X-Request-ID": "trace-me-123"})
     assert r.headers["x-request-id"] == "trace-me-123"
     metrics = (await client.get("/metrics")).text

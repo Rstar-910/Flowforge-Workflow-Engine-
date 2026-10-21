@@ -493,7 +493,10 @@ function renderTaskDetail() {
 function renderEvents() {
   const list = $("events");
   const items = state.events.slice().reverse();
-  $("events-count").textContent = state.events.length ? `${state.events.length}${state.events.length >= MAX_EVENTS ? "+" : ""} events, newest first` : "";
+  const pruned = state.run && state.run.events_pruned_at;
+  $("events-count").textContent = pruned
+    ? `older events removed by retention ${ago(pruned)}`
+    : state.events.length ? `${state.events.length}${state.events.length >= MAX_EVENTS ? "+" : ""} events, newest first` : "";
   const keyOf = new Map(state.tasks.map((t) => [t.id, t.task_key]));
   list.replaceChildren(...items.map((e) => {
     const data = {};

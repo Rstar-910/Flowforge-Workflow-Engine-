@@ -156,7 +156,13 @@ class HandlerExecutor:
                 await asyncio.sleep(0.02)
         finally:
             parent.close()
-            await _stop_process(proc)
+            # Signal the child *before* any await: if this task is cancelled
+            # again while cleaning up (worker shutdown, a teardown timeout), an
+            # await here would be interrupted and the child would keep running,
+            # side effects included. Reaping is shielded for the same reason.
+            if proc.is_alive():
+                proc.terminate()
+            await asyncio.shield(asyncio.to_thread(_reap_process, proc))
         if kind == "ok":
             return payload
         error_type, message, retryable, retry_after, _tb = payload
@@ -169,13 +175,9 @@ async def _wait_cancel(ctx: TaskContext) -> None:
         await asyncio.sleep(0.05)
 
 
-async def _stop_process(proc: Any) -> None:
+def _reap_process(proc: Any) -> None:
+    """Wait for a terminated child; escalate to SIGKILL if it ignores SIGTERM."""
+    proc.join(1.0)
     if proc.is_alive():
-        proc.terminate()
-        for _ in range(50):
-            if not proc.is_alive():
-                break
-            await asyncio.sleep(0.02)
-        if proc.is_alive():
-            proc.kill()
-    await asyncio.to_thread(proc.join, 5)
+        proc.kill()
+        proc.join(5.0)

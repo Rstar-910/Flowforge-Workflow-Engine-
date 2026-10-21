@@ -89,6 +89,19 @@ class WorkflowRun(Base):
             "status",
             postgresql_where=text("status IN ('PENDING', 'RUNNING', 'CANCELLING')"),
         ),
+        # Retention scans: oldest finished runs first.
+        Index(
+            "ix_workflow_runs_finished",
+            "completed_at",
+            postgresql_where=text("status IN ('SUCCEEDED', 'FAILED', 'CANCELLED')"),
+        ),
+        Index(
+            "ix_workflow_runs_events_unpruned",
+            "completed_at",
+            postgresql_where=text(
+                "status IN ('SUCCEEDED', 'FAILED', 'CANCELLED') AND events_pruned_at IS NULL"
+            ),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
@@ -110,6 +123,8 @@ class WorkflowRun(Base):
     started_at: Mapped[datetime | None] = _ts()
     completed_at: Mapped[datetime | None] = _ts()
     cancellation_requested_at: Mapped[datetime | None] = _ts()
+    # Set when retention deleted this run's events (attempts and tasks are kept).
+    events_pruned_at: Mapped[datetime | None] = _ts()
     updated_at: Mapped[datetime] = _ts(nullable=False, default_now=True)
 
 

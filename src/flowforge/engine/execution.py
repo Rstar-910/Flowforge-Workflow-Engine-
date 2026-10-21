@@ -29,6 +29,7 @@ from typing import Any
 from sqlalchemy import String, bindparam, select, text, update
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 from flowforge import __version__
@@ -514,6 +515,16 @@ async def _record_stale_result(
         event_type="stale_result_rejected",
         reported=reported,
     )
+    try:
+        await _append_stale_event(engine, claimed, worker_id, reported)
+    except IntegrityError:
+        # The run was deleted by retention in the meantime: nothing left to annotate.
+        logger.info("stale result for a run that no longer exists; not recorded")
+
+
+async def _append_stale_event(
+    engine: AsyncEngine, claimed: ClaimedTask, worker_id: str, reported: str
+) -> None:
     async with engine.begin() as conn:
         await append_events(
             conn,

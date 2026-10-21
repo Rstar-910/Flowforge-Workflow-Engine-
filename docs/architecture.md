@@ -98,6 +98,9 @@ dependencies. The domain package has no I/O.
      to the fence. It marks the attempt `LEASE_EXPIRED`, applies the retry policy,
      then locks the run and runs progression.
    - Reconcile stuck runs, every 5 cycles.
+   - Retention, every `retention_interval_seconds` (default 60 s). It prunes events of
+     old finished runs, deletes old finished runs, and removes stale worker rows, in
+     batches of `retention_batch_size` runs per short transaction (ADR 0013).
    - Gauges: tasks by status and worker heartbeat age.
 
 ## Transaction boundaries and locking
@@ -136,7 +139,11 @@ handler runs. `idle_in_transaction_session_timeout` (60 s) and `statement_timeou
 - `task_dependencies`: composite PK; no self-edges; indexed by `depends_on_task_id`.
 - `task_attempts`: unique `(task_id, attempt_number)`; outcome CHECK;
   `ended_at` ⇔ finished.
-- `task_events`: bigint identity; append-only (an UPDATE trigger raises); indexed by
+- `workflow_runs.events_pruned_at` (migration 0002): set when retention removed the
+  run's events. Partial indexes on `completed_at` for finished runs keep retention
+  scans proportional to the work.
+- `task_events`: bigint identity; append-only (an UPDATE trigger raises; only
+  retention deletes, never edits); indexed by
   `(run_id, id)` for cursor pagination.
 - `workers`: registry with `last_heartbeat_at` and `stopped_at`.
 - `idempotency_records`: PK `(tenant_id, idempotency_key)`, `request_hash` (SHA-256 of

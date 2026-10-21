@@ -41,6 +41,9 @@ listed as a limitation.
   Independent branches still finish.
 - **Cancellation**: queued work is cancelled atomically. Running handlers get
   cooperative cancellation, and the engine records the outcome that actually happened.
+- **Retention** (opt-in): prune events of old finished runs, delete old finished runs
+  with their history, and remove stale worker records, in small scheduler-driven
+  batches.
 - **Idempotent submission**: tenant-scoped keys, a request hash, safe under concurrency,
   409 on mismatch.
 - **Security**: API keys with tenant isolation and roles, request-size limits, request
@@ -297,6 +300,9 @@ All settings are environment variables with the `FLOWFORGE_` prefix (see
 | `MAX_REQUEST_BYTES` / `MAX_JSON_VALUE_BYTES` | 1 MiB / 256 KiB | request size and input/output limits |
 | `RUN_SUBMIT_RATE_PER_SECOND` | off | per-tenant submission limit (per API process) |
 | `METRICS_PORT` | off | Prometheus port for the worker and scheduler |
+| `EVENT_RETENTION_DAYS` | off | delete events of runs finished longer ago (runs, tasks, attempts kept) |
+| `RUN_RETENTION_DAYS` | off | delete runs finished longer ago, with all their history; this is also the idempotency-key window |
+| `WORKER_RETENTION_HOURS` | 168 | remove stopped or silent workers from the registry |
 
 ## Known limitations
 
@@ -310,7 +316,7 @@ These are explained in detail in [docs/failure-model.md](docs/failure-model.md).
 - Thread handlers cannot be interrupted. A timed-out thread keeps a worker slot until
   it returns.
 - Not implemented: queue timeouts, workflow deadlines, compensation/sagas, scheduled or
-  recurring workflows, retention of old events, a global rate limiter.
+  recurring workflows, partitioning of the event table, a global rate limiter.
 - Tested on one host, with PostgreSQL in Docker. No multi-host partitions and no
   PostgreSQL failover.
 
@@ -320,7 +326,7 @@ These are deliberately deferred until measurements justify them:
 
 - LISTEN/NOTIFY to reduce polling latency.
 - Batch completions.
-- Event retention and partitioning.
+- Event table partitioning, if retention deletes ever become a measured cost.
 - Workflow deadlines.
 - Compensation steps.
 - Per-tenant fairness and quotas.

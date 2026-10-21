@@ -146,7 +146,12 @@ async def retry_failed_task(
         )
         if run["status"] == RunStatus.FAILED:
             await set_run_status(
-                conn, run, RunStatus.RUNNING, completed_at=None, failure_reason=None
+                conn,
+                run,
+                RunStatus.RUNNING,
+                completed_at=None,
+                failure_reason=None,
+                events_pruned_at=None,  # new events get normal retention again
             )
             run = {**run, "status": RunStatus.RUNNING.value}
         await advance_run(conn, run)

@@ -60,6 +60,7 @@ class RunOut(BaseModel):
     started_at: datetime | None
     completed_at: datetime | None
     cancellation_requested_at: datetime | None
+    events_pruned_at: datetime | None = None
     task_counts: dict[str, int] | None = None
 
     @classmethod
