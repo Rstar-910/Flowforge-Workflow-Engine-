@@ -14,6 +14,43 @@ This is an educational portfolio project. Every guarantee listed below is backed
 automated test, and every number by a reproducible benchmark. Anything not tested is
 listed as a limitation.
 
+## See it in five minutes
+
+Requirements: Docker and [uv](https://docs.astral.sh/uv/) (uv installs Python 3.12 if
+needed). Nothing else, and no cloud services.
+
+```bash
+git clone https://github.com/Rstar-910/Flowforge-Workflow-Engine-.git flowforge && cd flowforge
+uv sync
+make run     # terminal 1: PostgreSQL in Docker, migrations, API + scheduler + 2 workers
+make demo    # terminal 2: start a workflow, SIGKILL the worker running a task, watch it recover
+```
+
+Open **http://127.0.0.1:8000/ui/** with the key `dev-admin-key` while the demo runs.
+
+![Dashboard recording of the crash-recovery demo](docs/images/dashboard-recovery-demo.gif)
+
+*Recorded from `make demo` (one frame per second, played about 3× faster). Task B fails
+once and is retried. While task C is running, its worker is SIGKILLed: the worker turns
+"silent", C's first attempt ends `LEASE_EXPIRED` once its lease runs out, another worker
+claims attempt 2, and D runs after C succeeds.*
+
+`make demo` ends by printing the attempt history from the database. From a fresh clone
+it printed:
+
+```
+task                status           att    #  worker                    outcome             ms  error
+A                   SUCCEEDED        1/3    1  worker-3                  SUCCEEDED            0
+B                   SUCCEEDED        2/3    1  worker-3                  FAILED               0  RetryableTaskError
+B                   SUCCEEDED        2/3    2  worker-2                  SUCCEEDED            0
+C                   SUCCEEDED        2/3    1  worker-3                  LEASE_EXPIRED    15099  LeaseExpired
+C                   SUCCEEDED        2/3    2  worker-2                  SUCCEEDED        20001
+D                   SUCCEEDED        1/3    1  worker-2                  SUCCEEDED            0
+```
+
+Each `make demo` kills one worker, so restart `make run` after two demos. More workflows
+to try are in [examples/](examples/README.md); `make test` runs the full suite.
+
 ## Features
 
 - **Workflow definitions**:
@@ -68,18 +105,25 @@ listed as a limitation.
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    client(["Client or dashboard"]) -->|"REST + X-API-Key"| api
+    subgraph procs["Stateless processes: run any number of each, kill any of them"]
+        direction TB
+        api["API<br/>validate, submit runs, query, cancel"]
+        worker["Worker<br/>claim, run handler, renew lease, fenced commit"]
+        scheduler["Scheduler<br/>expired leases, due retries, deadlines, retention"]
+    end
+    api --> pg
+    worker --> pg
+    scheduler --> pg
+    pg[("PostgreSQL<br/>queue, state and history:<br/>the only source of truth")]
 ```
-            ┌──────────────┐ REST (X-API-Key)
- Client ───▶│  API (N×)    │──────────────┐
-            └──────────────┘              ▼
-            ┌──────────────┐       ┌──────────────┐
-            │ Scheduler    │──────▶│  PostgreSQL  │  definitions · runs · tasks ·
-            └──────────────┘       │ (source of   │  dependencies · attempts ·
-            ┌──────────────┐       │  truth)      │  events · workers ·
-            │ Worker (N×)  │──────▶│              │  idempotency records
-            │  handlers    │       └──────────────┘
-            └──────────────┘
-```
+
+There is no message broker and no in-memory state that matters: every process can be
+killed at any time, and any copy of it can continue from what is in PostgreSQL (tables:
+definitions, runs, tasks, dependencies, attempts, events, workers, idempotency records).
+Every process exposes Prometheus metrics and emits JSON logs and OpenTelemetry spans.
 
 **Task life cycle:**
 
@@ -90,7 +134,25 @@ listed as a limitation.
    write the outcome, lock the run, then promote dependents and finalise the run.
 
 A crashed worker's lease expires. The scheduler records the attempt as `LEASE_EXPIRED`
-(outcome unknown) and applies the retry policy.
+(outcome unknown) and applies the retry policy:
+
+```mermaid
+sequenceDiagram
+    participant W1 as Worker 1
+    participant PG as PostgreSQL
+    participant S as Scheduler
+    participant W2 as Worker 2
+    W1->>PG: claim READY task (FOR UPDATE SKIP LOCKED)<br/>attempt 1, lease until now + 15 s
+    loop every 5 s while the handler runs
+        W1->>PG: renew lease, only if attempt 1 is still current
+    end
+    Note over W1: SIGKILL: renewals stop
+    S->>PG: lease expired: attempt 1 = LEASE_EXPIRED (outcome unknown)<br/>task to RETRY_WAIT
+    S->>PG: retry due: task READY
+    W2->>PG: claim: attempt 2, new lease
+    W2->>PG: fenced commit: attempt 2 is current, so SUCCEEDED<br/>then lock the run and promote dependents
+    Note over W1,PG: Had worker 1 only paused, its late commit for attempt 1 is rejected by the fence
+```
 
 - [docs/architecture.md](docs/architecture.md): components, transaction boundaries,
   locking, data model, security, observability.
@@ -111,19 +173,19 @@ A crashed worker's lease expires. The scheduler records the attempt as `LEASE_EX
   2 schedulers and 6 workers, with a worker, a scheduler and an API process killed
   mid-load; overload behaviour; where the time goes.
 
-## Quick start
+## Running it
 
-Requirements: Docker, [uv](https://docs.astral.sh/uv/), and Python 3.12+ (uv can
-install it). No cloud services are needed.
+`make run` (above) is the shortest path. These are the steps it performs, if you want to
+run the components yourself:
 
 ```bash
-cp .env.example .env                       # development-only keys and settings
+cp .env.example .env                       # local-development keys and settings
 uv sync                                    # create .venv with pinned dependencies
-docker compose -f deployments/docker-compose.yml up -d --wait postgres   # PostgreSQL 17 on :5433
+docker compose -f deployments/docker-compose.yml up -d --wait postgres   # PostgreSQL 17 on 127.0.0.1:5433
 uv run flowforge migrate                   # apply Alembic migrations
 ```
 
-Run each component in its own terminal, or use `scripts/run-local.sh` to start them all:
+Then run each component in its own terminal:
 
 ```bash
 uv run flowforge api --port 8000                       # http://127.0.0.1:8000/docs
@@ -133,7 +195,32 @@ uv run flowforge worker --concurrency 4 --worker-id worker-2
 ```
 
 To run the whole stack in containers instead:
-`docker compose -f deployments/docker-compose.yml --profile app up --build`.
+`docker compose -f deployments/docker-compose.yml --profile app up --build`
+(API on 127.0.0.1:8000, a scheduler and two workers). Stop PostgreSQL with
+`make down`; add `-v` to the underlying `docker compose down` to delete its data too.
+
+| command | what it does |
+|---|---|
+| `make run` | PostgreSQL, migrations, API, scheduler and 2 workers (`WORKERS=4 make run` for more); logs in `.local-logs/` |
+| `make demo` | the crash-recovery demo above, against a running `make run` |
+| `make test` | the full test suite (about 2 minutes) |
+| `make bench-quick` / `make bench` | throughput benchmark, about 35 s / several minutes |
+| `make load-test` | 210 s sustained load with process kills (see below) |
+| `make down` | stop the Compose PostgreSQL (data is kept) |
+
+### Credentials are local-only
+
+Every credential in this repository is a **public, local-development value**: the API
+keys `dev-user-key` and `dev-admin-key` in `.env.example`, and the PostgreSQL password
+`flowforge` in `deployments/docker-compose.yml`. They exist so that a clone runs with
+one copy command. To keep that safe:
+
+- Compose publishes PostgreSQL and the API on **127.0.0.1 only**, so neither is
+  reachable from other machines.
+- The API, the scheduler and the workers log a **warning at startup** whenever they are
+  configured with any of these public values.
+- `.env` is git-ignored; only `.env.example` is committed. Generate your own keys and
+  database password for anything other people can reach.
 
 ### Dashboard
 
@@ -154,7 +241,8 @@ Open **http://127.0.0.1:8000/ui/** and enter an API key (`dev-user-key`, or
 *Above: task C's first attempt on worker-3 ended `LEASE_EXPIRED` after the worker was
 SIGKILLed, and attempt 2 is running on worker-2. D waits on C. Below: a failed run.
 `validate` failed permanently, its dependents are `UPSTREAM_FAILED`, the independent
-`audit` branch still finished, and an admin can retry.*
+`audit` branch still finished, and an admin can retry
+([examples/failure-workflow.json](examples/failure-workflow.json)).*
 
 ![Dashboard showing a failed run](docs/images/dashboard-failed-run.png)
 
@@ -271,12 +359,18 @@ handled safely.
 ## Benchmarks
 
 ```bash
-uv run python scripts/benchmark.py            # full suite, 3 trials per configuration
-uv run python scripts/benchmark.py --quick    # smaller, 1 trial
+make bench-quick       # uv run python scripts/benchmark.py --quick   (1 trial, about 35 s)
+make bench             # uv run python scripts/benchmark.py           (3 trials per configuration)
+make load-test         # uv run python scripts/load_test.py           (25 runs/s for 210 s, with kills)
+uv run python scripts/load_test.py --rate 10 --duration 40           # a shorter load test
 ```
 
-The harness recreates a separate `flowforge_bench` database and spawns real processes.
-Raw JSON goes to `benchmarks/results/`.
+Both harnesses recreate their own database (`flowforge_bench`,
+`flowforge_bench_load`) on the Compose PostgreSQL, spawn real processes, and never touch
+your working data. Each run writes raw JSON to `benchmarks/results/`, including the
+environment it ran in (CPU, core count, OS, Python and PostgreSQL versions, git commit,
+and engine settings), so results from different machines can be compared honestly.
+Expect different absolute numbers on other hardware.
 
 Measured on an Apple A18 Pro laptop (6 cores), with PostgreSQL 17 in Docker Desktop
 and every process on the same host. Handlers are no-ops, so these numbers measure engine
@@ -370,9 +464,9 @@ These are deliberately deferred until measurements justify them:
 src/flowforge/      application package (api, engine, worker, scheduler, domain, db, observability)
 migrations/         Alembic migrations
 tests/              unit, integration, concurrency, failure-injection tests (+ support helpers)
-examples/           sample workflow definitions
-scripts/            run-local.sh, demo.sh, inject-worker-crash.sh, benchmark.py
+examples/           sample workflow definitions, with expected results (examples/README.md)
+scripts/            run-local.sh, demo.sh, inject-worker-crash.sh, benchmark.py, load_test.py, mutation_check.py
 docs/               architecture, state machines, failure model, benchmark results, ADRs
 deployments/        docker-compose.yml, Dockerfile
-.github/workflows/  CI (lint, mypy, migrations, full test suite, benchmark smoke run)
+.github/workflows/  CI (lint, mypy, migrations, full test suite, benchmark smoke run, mutation check)
 ```

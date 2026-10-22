@@ -54,6 +54,11 @@ function h(tag, attrs = {}, ...children) {
   return el;
 }
 
+// Error messages can be long: show three lines, the full text on hover.
+function errCell(msg) {
+  return h("td", { class: "err-cell small", title: msg || null }, h("div", { class: "clamp", text: msg }));
+}
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 function s(tag, attrs = {}, ...children) {
   const el = document.createElementNS(SVG_NS, tag);
@@ -457,7 +462,7 @@ function renderTasks() {
   h("td", { class: "num", text: `${t.attempt_count}/${t.attempt_limit}` }),
   h("td", { class: "mono small", text: t.lease_owner || "" }),
   h("td", { class: "num", text: t.started_at ? dur(t.started_at, t.completed_at) : "—" }),
-  h("td", { class: "err-cell small", text: t.status === "SUCCEEDED" ? "" : (t.last_error_type ? `${t.last_error_type}: ${t.last_error_message || ""}` : "") })));
+  errCell(t.status === "SUCCEEDED" ? "" : (t.last_error_type ? `${t.last_error_type}: ${t.last_error_message || ""}` : ""))));
   $("tasks-table").replaceChildren(h("thead", {}, head), h("tbody", {}, rows));
 }
 
@@ -487,7 +492,7 @@ function renderTaskDetail() {
     h("td", {}, badge(a.outcome)),
     h("td", { class: "num", text: fmtMs(a.queue_wait_ms) }),
     h("td", { class: "num", text: a.outcome === "RUNNING" ? dur(a.started_at) : fmtMs(a.duration_ms) }),
-    h("td", { class: "err-cell small", text: a.error_type ? `${a.error_type}: ${a.error_message || ""}` : "" })));
+    errCell(a.error_type ? `${a.error_type}: ${a.error_message || ""}` : "")));
   const output = t.output != null
     ? h("details", {}, h("summary", { class: "small", text: "Output" }), h("pre", { class: "mono small", text: JSON.stringify(t.output, null, 2) }))
     : null;

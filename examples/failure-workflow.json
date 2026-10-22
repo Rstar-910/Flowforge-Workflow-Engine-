@@ -1,0 +1,15 @@
+{
+  "name": "failure-propagation",
+  "version": 1,
+  "description": "validate fails permanently: its dependents become UPSTREAM_FAILED, the independent audit branch still finishes, the run ends FAILED",
+  "tasks": [
+    {"id": "fetch", "handler": "fetch_data"},
+    {"id": "validate", "handler": "always_fail", "depends_on": ["fetch"],
+     "input": {"message": "schema check failed: column 'amount' missing"}},
+    {"id": "transform", "handler": "aggregate", "depends_on": ["validate"],
+     "input": {"source": "validate", "op": "sum"}},
+    {"id": "load", "handler": "combine", "depends_on": ["transform"]},
+    {"id": "audit", "handler": "aggregate", "depends_on": ["fetch"],
+     "input": {"source": "fetch", "op": "max"}}
+  ]
+}

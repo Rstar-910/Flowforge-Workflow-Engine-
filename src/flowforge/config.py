@@ -11,6 +11,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 Role = Literal["user", "admin"]
 
+# Credentials published in this repository (.env.example, docker-compose.yml). Anyone can read
+# them, so they are for local development only; processes warn at startup when they see them.
+PUBLISHED_DEV_API_KEYS = frozenset({"dev-admin-key", "dev-user-key"})
+PUBLISHED_DEV_DB_PASSWORD = "flowforge"  # noqa: S105 - public by design, used to detect it
+
 
 @dataclass(frozen=True, slots=True)
 class ApiKeyEntry:
@@ -100,6 +105,17 @@ class Settings(BaseSettings):
                 raise ValueError(f"unknown role {role!r} in FLOWFORGE_API_KEYS")
             entries[key] = ApiKeyEntry(key=key, tenant=tenant, role=role)  # type: ignore[arg-type]
         return entries
+
+    def published_dev_credentials(self) -> list[str]:
+        """Which of the repository's public development credentials this config uses."""
+        from sqlalchemy.engine import make_url
+
+        found = []
+        if PUBLISHED_DEV_API_KEYS & self.parsed_api_keys().keys():
+            found.append("API keys from .env.example")
+        if make_url(self.database_url.get_secret_value()).password == PUBLISHED_DEV_DB_PASSWORD:
+            found.append("database password from docker-compose.yml")
+        return found
 
     def handler_module_list(self) -> list[str]:
         return [m.strip() for m in self.handler_modules.split(",") if m.strip()]

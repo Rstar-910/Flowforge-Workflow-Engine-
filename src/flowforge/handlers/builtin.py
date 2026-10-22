@@ -173,6 +173,7 @@ def record_effect(ctx: TaskContext) -> dict[str, Any]:
         "attempt": ctx.attempt_number,
         "amount": ctx.input.get("amount", 1),
     }
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a+") as fh:
         fcntl.flock(fh, fcntl.LOCK_EX)
         try:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -177,6 +179,28 @@ def test_api_key_parsing_and_validation():
         Settings(_env_file=None, api_keys="k1:t1:root").parsed_api_keys()  # type: ignore[call-arg]
     with pytest.raises(ValueError):
         Settings(_env_file=None, api_keys="justakey").parsed_api_keys()  # type: ignore[call-arg]
+
+
+def test_published_dev_credentials_are_detected():
+    example = Path(__file__).resolve().parents[2] / ".env.example"
+    env = dict(
+        line.split("=", 1) for line in example.read_text().splitlines() if line[:1].isalpha()
+    )
+    dev = Settings(  # type: ignore[call-arg]
+        _env_file=None,
+        api_keys=env["FLOWFORGE_API_KEYS"],
+        database_url=env["FLOWFORGE_DATABASE_URL"],
+    )
+    assert dev.published_dev_credentials() == [
+        "API keys from .env.example",
+        "database password from docker-compose.yml",
+    ]
+    own = Settings(  # type: ignore[call-arg]
+        _env_file=None,
+        api_keys="a-real-secret:t1:admin",
+        database_url="postgresql+asyncpg://ff:another-secret@db:5432/ff",
+    )
+    assert own.published_dev_credentials() == []
 
 
 def test_heartbeat_must_be_shorter_than_lease():

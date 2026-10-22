@@ -207,6 +207,7 @@ label { display: block; font-weight: 500; margin: 12px 0 4px; }
 .table tr.clickable:hover td { background: var(--surface-2); }
 .table tr.selected td { background: var(--s-ready-bg); }
 .err-cell { color: var(--danger); max-width: 260px; overflow-wrap: anywhere; }
+.err-cell .clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
 
 /* ---------- events ---------- */
 .events { list-style: none; margin: 0; padding: 0; max-height: 360px; overflow: auto; font-size: 13px; }

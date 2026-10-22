@@ -160,6 +160,14 @@ def main(argv: list[str] | None = None) -> int:
     service = f"{settings.service_name}-{args.command}"
     configure_logging(service, settings.log_level, settings.log_format)
     configure_tracing(service)
+    if args.command in ("api", "worker", "scheduler") and (
+        published := settings.published_dev_credentials()
+    ):
+        logger.warning(
+            "using the repository's public development credentials (%s); "
+            "these are for local development only, never for a reachable deployment",
+            ", ".join(published),
+        )
 
     if args.command == "api":
         import uvicorn
