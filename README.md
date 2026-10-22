@@ -20,7 +20,7 @@ Requirements: Docker and [uv](https://docs.astral.sh/uv/) (uv installs Python 3.
 needed). Nothing else, and no cloud services.
 
 ```bash
-git clone https://github.com/Rstar-910/Flowforge-Workflow-Engine-.git flowforge && cd flowforge
+git clone https://github.com/Rstar-910/postgres-workflow-engine.git && cd postgres-workflow-engine
 uv sync
 make run     # terminal 1: PostgreSQL in Docker, migrations, API + scheduler + 2 workers
 make demo    # terminal 2: start a workflow, SIGKILL the worker running a task, watch it recover
